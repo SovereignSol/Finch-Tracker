@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "iconsBase": "./Icons/",
+    "actionIcons": {
+      "action": "Action.webp",
+      "bonus": "Bonus_action.webp",
+      "reaction": "Reaction.webp",
+      "actionUsed": "Action_used.webp",
+      "bonusUsed": "Bonus_action_used.webp",
+      "reactionUsed": "Reaction_used.webp"
+    },
+    "maxAttacksPerTurn": 1
+  },
+  "abilities": [
+    {
+      "id": "example_active_spell",
+      "name": "Example Active Ability (Costs something)",
+      "level": 1,
+      "actionType": "action",
+      "icon": "./Icons/example.webp",
+      "cost": [
+        { "resource": "Spell Slot", "amount": 1 }
+      ],
+      "usage": { "type": "oncePerLongRest" },
+      "desc": "Put the full rules text here."
+    },
+    {
+      "id": "example_reaction",
+      "name": "Example Reaction Ability",
+      "level": 1,
+      "actionType": "reaction",
+      "icon": "./Icons/example_reaction.webp",
+      "cost": [
+        { "resource": "Charges", "amount": 1 }
+      ],
+      "usage": { "type": "oncePerShortRest" },
+      "desc": "Put the full rules text here."
+    },
+    {
+      "id": "example_passive_feature",
+      "name": "Example Passive Feature (No cost)",
+      "level": 1,
+      "actionType": "passive",
+      "icon": "./Icons/example_passive.webp",
+      "cost": [],
+      "usage": { "type": "none" },
+      "desc": "This is a passive feature. With an empty cost array, it will appear under Passive Abilities."
+    }
+  ]
+}
