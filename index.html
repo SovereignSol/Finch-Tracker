@@ -52,7 +52,7 @@
 
       .row {
         display: grid;
-        grid-template-columns: 1fr 220px;
+        grid-template-columns: 1fr 280px;
         gap: 12px;
         align-items: center;
       }
@@ -147,6 +147,33 @@
         gap: 12px;
       }
       .sectionTitle h2 { margin: 0; font-size: 18px; }
+
+      .divider { height: 1px; background: var(--border); margin: 12px 0; opacity: 0.8; }
+      .pill { padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; display:flex; gap:8px; align-items:center; }
+
+      /* Class blocks */
+      .classBlockWrap {
+        margin-top: 10px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(0,0,0,0.18);
+        display: grid;
+        gap: 10px;
+      }
+      .classBlockRow {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .classBlockRow { grid-template-columns: 1fr 160px 220px; align-items: end; }
+      }
+      .classBlockTitle {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
 
       /* Action Economy */
       .economyWrap {
@@ -300,7 +327,7 @@
         padding: 10px;
         background: rgba(0,0,0,0.18);
         display: grid;
-        grid-template-columns: 120px 1fr;
+        grid-template-columns: 170px 1fr;
         gap: 10px;
         align-items: center;
         margin-top: 10px;
@@ -331,15 +358,15 @@
         text-decoration: line-through;
       }
 
-      /* Prepared spells area */
-      .spellPreparedGrid {
+      /* Small spell blocks */
+      .spellGrid {
         margin-top: 12px;
         display: grid;
         grid-template-columns: 1fr;
         gap: 8px;
       }
       @media (min-width: 900px) {
-        .spellPreparedGrid { grid-template-columns: 1fr 1fr; }
+        .spellGrid { grid-template-columns: 1fr 1fr; }
       }
 
       .spellCard {
@@ -468,7 +495,7 @@
     <main class="wrap">
       <header class="header">
         <h1>Generic RPG Tracker</h1>
-        <p class="sub">Loads abilities from ./data/abilities.json, spellcasting from ./data/spellcasting.json, spells from ./data/spells.json</p>
+        <p class="sub">Spellcasting: ./data/spellcasting.json, Spells: ./data/spells.json</p>
       </header>
 
       <section class="card" id="coreCard" aria-label="Core">
@@ -478,28 +505,42 @@
         </div>
 
         <div class="row" style="margin-top: 10px;">
-          <label for="classSelect" class="label">Class (Spellcasting)</label>
-          <select id="classSelect">
-            <option value="">Loading classes...</option>
-          </select>
+          <label for="multiclassToggle" class="label">Multiclass</label>
+          <div class="controls" style="margin-top:0; justify-content:flex-end;">
+            <label class="pill"><input id="multiclassToggle" type="checkbox" /> Enable (2 classes max, pooled slots)</label>
+          </div>
         </div>
 
-        <div class="row" style="margin-top: 10px;" id="spellModRow">
-          <label for="spellModInput" class="label" id="spellModLabel">Spellcasting Ability Mod</label>
-          <input id="spellModInput" type="number" step="1" />
+        <div class="classBlockWrap" aria-label="Class selection">
+          <div class="classBlockTitle">Class Spellcasting</div>
+          <div id="classBlocks"></div>
+          <div class="sub" id="classWarning"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <label for="buildManifestUrl" class="label">Build Manifest URL (optional)</label>
+          <input id="buildManifestUrl" type="url" placeholder="./data/builds/paladin_base.json (example)" />
+        </div>
+        <div class="controls" style="margin-top: 10px;">
+          <button id="loadManifest" class="btn" type="button">Load Manifest</button>
+          <button id="addPackage" class="btn" type="button">Add Package URL</button>
+          <button id="clearPackages" class="btn" type="button">Clear Packages</button>
+          <div class="sub" id="packageSummary" style="margin-left:auto;"></div>
         </div>
 
         <div class="topStats">
           <div class="statBox">
-            <div class="statLabel">Resource A</div>
+            <div class="statLabel" id="statALabel">Resource A</div>
             <div class="statValue" id="statAText">0</div>
           </div>
           <div class="statBox">
-            <div class="statLabel">Resource B</div>
+            <div class="statLabel" id="statBLabel">Resource B</div>
             <div class="statValue" id="statBText">-</div>
           </div>
           <div class="statBox">
-            <div class="statLabel">Resource C</div>
+            <div class="statLabel" id="statCLabel">Resource C</div>
             <div class="statValue" id="statCText">-</div>
           </div>
         </div>
@@ -522,17 +563,10 @@
 
           <div class="controls" style="margin-top: 12px;">
             <button id="spellsResetSlots" class="btn" type="button">Reset Slots</button>
-            <button id="spellsPrepareBtn" class="btn" type="button">Prepare Spells</button>
-            <div class="sub" id="preparedLimitText" style="margin-left: auto;"></div>
+            <button id="openSpellbookSlots" class="btn" type="button">Open Spellbook</button>
           </div>
 
           <div id="spellStatus" class="statusBar" role="status" aria-live="polite"></div>
-
-          <div class="sectionTitle" style="margin-top: 16px;">
-            <h2>Prepared Spells</h2>
-            <div class="sub" id="preparedHint">Prepared spells appear here and can be cast, consuming action economy and spell slots.</div>
-          </div>
-          <div id="preparedSpellsGrid" class="spellPreparedGrid"></div>
         </div>
 
         <div class="economyWrap" aria-label="Action economy">
@@ -621,10 +655,25 @@
         </div>
       </section>
 
+      <section class="card" id="spellsCard" aria-label="Spells">
+        <div class="sectionTitle">
+          <h2 id="spellsSectionTitle">Spells</h2>
+          <div class="sub" id="spellsSectionSub">Prepared casters: manage prepared spells. Known casters: manage known spells.</div>
+        </div>
+
+        <div class="controls" style="margin-top: 12px;">
+          <button id="spellsManageBtn" class="btn" type="button">Manage Spells</button>
+          <div class="sub" id="spellsLimitText" style="margin-left:auto;"></div>
+        </div>
+
+        <div id="spellsGrid" class="spellGrid"></div>
+        <div id="spellsStatus" class="statusBar" role="status" aria-live="polite"></div>
+      </section>
+
       <section class="card" id="abilitiesCard" aria-label="Abilities">
         <div class="sectionTitle">
           <h2>Abilities</h2>
-          <div class="sub">Loaded from support document, spend action economy when used.</div>
+          <div class="sub">Loaded from packages, spend action economy when used.</div>
         </div>
         <div id="abilitiesGrid" class="abilityGrid"></div>
       </section>
@@ -632,7 +681,7 @@
       <section class="card" id="passivesCard" aria-label="Passive Abilities">
         <div class="sectionTitle">
           <h2>Passive Abilities</h2>
-          <div class="sub">Loaded from support document, reference only.</div>
+          <div class="sub">Loaded from packages, reference only.</div>
         </div>
         <div id="passivesGrid" class="abilityGrid"></div>
       </section>
@@ -653,32 +702,86 @@
         </div>
       </dialog>
 
-      <dialog id="optionsDialog" aria-label="Additional options dialog">
+      <dialog id="spellbookDialog" aria-label="Spellbook dialog">
         <div class="dlgHead">
-          <h3 class="dlgTitle" id="optTitle">Additional Options</h3>
-          <button class="qBtn" id="optX" type="button" aria-label="Close dialog">×</button>
+          <h3 class="dlgTitle" id="spellbookTitle">Spellbook</h3>
+          <button class="qBtn" id="spellbookX" type="button" aria-label="Close dialog">×</button>
         </div>
+
         <div class="dlgBody">
-          <div class="popupGrid">
-            <div class="popupSection" id="optSectionGeneric">
-              <div class="popupSectionTitle" id="optGenericTitle">Generic</div>
-              <div class="popupBtns" id="optGenericBtns"></div>
+          <div class="controls" style="margin-top: 0;">
+            <input id="spellSearch" type="text" placeholder="Search spells..." />
+            <select id="spellLevelFilter">
+              <option value="all">All levels</option>
+              <option value="0">Cantrips</option>
+              <option value="1">Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4</option>
+              <option value="5">Level 5</option>
+              <option value="6">Level 6</option>
+              <option value="7">Level 7</option>
+              <option value="8">Level 8</option>
+              <option value="9">Level 9</option>
+            </select>
+          </div>
+
+          <div class="popupGrid" style="margin-top: 12px;">
+            <div class="popupSection">
+              <div class="popupSectionTitle" id="spellbookMainTitle">Class Spells</div>
+              <div id="spellbookList" class="popupBtns"></div>
             </div>
 
             <div class="popupSection">
-              <div class="popupSectionTitle">Abilities</div>
-              <div class="popupBtns" id="optAbilityBtns"></div>
-            </div>
-
-            <div class="popupSection">
-              <div class="popupSectionTitle">Passive Abilities</div>
-              <div class="popupBtns" id="optPassiveBtns"></div>
+              <div class="popupSectionTitle" id="spellbookRightTitle">Package (Subclass) Spells</div>
+              <div id="spellbookRightList" class="popupBtns"></div>
             </div>
           </div>
-          <div class="statusBar" id="optStatus" role="status" aria-live="polite"></div>
+
+          <div class="statusBar" id="spellbookStatus" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="dlgActions">
+          <button class="btn" id="spellbookClose" type="button">Close</button>
+        </div>
+      </dialog>
+
+      <dialog id="castDialog" aria-label="Cast spell dialog">
+        <div class="dlgHead">
+          <h3 class="dlgTitle" id="castTitle">Cast Spell</h3>
+          <button class="qBtn" id="castX" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <div class="dlgBody">
+          <div class="row" style="grid-template-columns: 1fr 280px;">
+            <label class="label" for="castSlotLevel">Spell Slot Level</label>
+            <select id="castSlotLevel"></select>
+          </div>
+
+          <div class="row" style="margin-top: 10px; grid-template-columns: 1fr 280px;">
+            <label class="label" for="castEconomy">Consumes</label>
+            <select id="castEconomy"></select>
+          </div>
+
+          <div class="statBox" style="margin-top: 12px;">
+            <div class="statLabel">Spell Details</div>
+            <div class="statValue" style="font-size: 13px; font-weight: 500; margin-top: 8px; white-space: pre-wrap;" id="castDetailsText"></div>
+          </div>
+
+          <div class="statBox" style="margin-top: 10px;">
+            <div class="statLabel">Rules Text</div>
+            <div class="statValue" style="font-size: 13px; font-weight: 500; margin-top: 8px; white-space: pre-wrap;" id="castRulesText"></div>
+          </div>
+
+          <div class="statBox" style="margin-top: 10px;">
+            <div class="statLabel">At Higher Levels</div>
+            <div class="statValue" style="font-size: 13px; font-weight: 500; margin-top: 8px; white-space: pre-wrap;" id="castHigherText"></div>
+          </div>
+
+          <div class="statusBar" id="castStatus" role="status" aria-live="polite"></div>
         </div>
         <div class="dlgActions">
-          <button class="btn" id="optClose" type="button">Close</button>
+          <button class="btn" id="castConfirm" type="button">Cast</button>
+          <button class="btn" id="castClose" type="button">Close</button>
         </div>
       </dialog>
 
@@ -733,97 +836,15 @@
           <button class="btn" id="calcClose" type="button">Close</button>
         </div>
       </dialog>
-
-      <dialog id="spellbookDialog" aria-label="Spellbook dialog">
-        <div class="dlgHead">
-          <h3 class="dlgTitle" id="spellbookTitle">Spellbook</h3>
-          <button class="qBtn" id="spellbookX" type="button" aria-label="Close dialog">×</button>
-        </div>
-
-        <div class="dlgBody">
-          <div class="controls" style="margin-top: 0;">
-            <input id="spellSearch" type="text" placeholder="Search spells..." />
-            <select id="spellLevelFilter">
-              <option value="all">All levels</option>
-              <option value="0">Cantrips</option>
-              <option value="1">Level 1</option>
-              <option value="2">Level 2</option>
-              <option value="3">Level 3</option>
-              <option value="4">Level 4</option>
-              <option value="5">Level 5</option>
-              <option value="6">Level 6</option>
-              <option value="7">Level 7</option>
-              <option value="8">Level 8</option>
-              <option value="9">Level 9</option>
-            </select>
-          </div>
-
-          <div class="popupGrid" style="margin-top: 12px;">
-            <div class="popupSection">
-              <div class="popupSectionTitle" id="spellbookMainTitle">Spells</div>
-              <div id="spellbookList" class="popupBtns"></div>
-            </div>
-
-            <div class="popupSection">
-              <div class="popupSectionTitle">Always Available (No preparation required)</div>
-              <div id="spellbookAlwaysList" class="popupBtns"></div>
-            </div>
-          </div>
-
-          <div class="statusBar" id="spellbookStatus" role="status" aria-live="polite"></div>
-        </div>
-
-        <div class="dlgActions">
-          <button class="btn" id="spellbookClose" type="button">Close</button>
-        </div>
-      </dialog>
-
-      <dialog id="castDialog" aria-label="Cast spell dialog">
-        <div class="dlgHead">
-          <h3 class="dlgTitle" id="castTitle">Cast Spell</h3>
-          <button class="qBtn" id="castX" type="button" aria-label="Close dialog">×</button>
-        </div>
-        <div class="dlgBody">
-          <div class="row" style="grid-template-columns: 1fr 220px;">
-            <label class="label" for="castSlotLevel">Spell Slot Level</label>
-            <select id="castSlotLevel"></select>
-          </div>
-
-          <div class="row" style="margin-top: 10px; grid-template-columns: 1fr 220px;">
-            <label class="label" for="castEconomy">Consumes</label>
-            <select id="castEconomy">
-              <option value="action">Action</option>
-              <option value="bonus">Bonus Action</option>
-              <option value="reaction">Reaction</option>
-              <option value="none">No Action (reference)</option>
-            </select>
-          </div>
-
-          <div class="statBox" style="margin-top: 12px;">
-            <div class="statLabel">Spell Effect (base)</div>
-            <div class="statValue" style="font-size: 13px; font-weight: 500; margin-top: 8px; white-space: pre-wrap;" id="castBaseText"></div>
-          </div>
-
-          <div class="statBox" style="margin-top: 10px;">
-            <div class="statLabel">At Higher Levels</div>
-            <div class="statValue" style="font-size: 13px; font-weight: 500; margin-top: 8px; white-space: pre-wrap;" id="castHigherText"></div>
-          </div>
-
-          <div class="statusBar" id="castStatus" role="status" aria-live="polite"></div>
-        </div>
-        <div class="dlgActions">
-          <button class="btn" id="castConfirm" type="button">Cast</button>
-          <button class="btn" id="castClose" type="button">Close</button>
-        </div>
-      </dialog>
     </main>
 
     <script>
       "use strict";
 
-      const SUPPORT_DOC_URL = "./data/abilities.json";
       const SPELLCASTING_URL = "./data/spellcasting.json";
       const SPELLS_URL = "./data/spells.json";
+
+      const STORAGE_KEY = "generic_tracker_state_v5_multiclass_pooled_packages";
 
       const DEFAULT_ICONS_BASE = "./Icons/";
       const DEFAULT_ACTION_ICONS = {
@@ -835,8 +856,6 @@
         reactionUsed: "Reaction_used.webp",
       };
 
-      const STORAGE_KEY = "generic_tracker_state_v3";
-
       function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
       function nint(v, fallback = 0) {
         const x = Number(v);
@@ -847,11 +866,11 @@
 `Readied action (Ready -> then react later)
 - On your turn, you use your ACTION to Ready something instead of doing it now.
 - You must pick:
-  1) A clear trigger (example: “When the ogre steps through the doorway…”), and
-  2) The exact response (example: “…I shoot it with my bow,” or “…I move behind the pillar.”).
+  1) A clear trigger (example: "When the ogre steps through the doorway..."), and
+  2) The exact response (example: "...I shoot it with my bow," or "...I move behind the pillar.").
 - Before the start of your next turn, if the trigger happens, you can use your REACTION to perform the readied response.
 - If the trigger never happens (or you choose not to react), the readied action is lost when your next turn starts.
-- If you Ready a SPELL, you cast it on your turn and hold it (concentration required), then release it with your reaction when the trigger happens. If you don’t release it, the spell slot is still spent.`;
+- If you Ready a SPELL, you cast it on your turn and hold it (concentration required), then release it with your reaction when the trigger happens. If you don't release it, the spell slot is still spent.`;
 
       const GENERIC_ACTION_BUTTONS = [
         { id: "dash", label: "Dash", text: "Dash (move extra up to your speed)" },
@@ -869,11 +888,14 @@
       const el = {};
       let state = loadState();
 
-      let SUPPORT = null;
       let SPELLCASTING = null;
       let SPELLS = null;
 
+      let PACKAGES = [];
+      let MERGED_SUPPORT = { meta: {}, resources: {}, abilities: [], passiveAbilities: [], additionalSpells: [] };
+
       let currentCastSpellId = null;
+      let currentCastSourceKey = null;
 
       function loadState() {
         try {
@@ -881,39 +903,69 @@
           if (!raw) {
             return {
               level: 1,
-              classKey: "",
-              spellMod: 0,
+              multiclass: false,
+              classBlocks: [
+                { key: "", classLevel: 1, mod: 0, packages: [] },
+                { key: "", classLevel: 0, mod: 0, packages: [] },
+              ],
+              spellSlotsUsed: {},
+
+              // Per class block spell picks (only for class spells)
+              preparedSpellsByBlock: {}, // blockKey -> [spellId]
+              knownSpellsByBlock: {}, // blockKey -> [spellId]
+
+              // resources
               statA: 0,
               statB: "-",
               statC: "-",
-              spellSlotsUsed: {},
-              preparedSpells: {},
+
+              // action economy
               actionUsed: false,
               bonusUsed: false,
               reactionUsed: false,
               attacksUsed: 0,
+
+              // health & AC
               hpNow: 10,
               hpMax: 10,
               hpTemp: 0,
               acBase: 10,
+
+              // per-rest ability locks (by ability id)
               restLocks: {},
+
+              // calculator
               calcExpr: "",
               calcResult: "0",
+
+              buildManifestUrl: "",
+              packageUrls: [],
             };
           }
 
           const p = JSON.parse(raw);
+          const blocks = Array.isArray(p.classBlocks) ? p.classBlocks : [];
+          const normBlocks = [
+            blocks[0] || { key: "", classLevel: 1, mod: 0, packages: [] },
+            blocks[1] || { key: "", classLevel: 0, mod: 0, packages: [] },
+          ].map(b => ({
+            key: typeof b.key === "string" ? b.key : "",
+            classLevel: Math.max(0, nint(b.classLevel, 0)),
+            mod: nint(b.mod, 0),
+            packages: Array.isArray(b.packages) ? b.packages.filter(x => typeof x === "string") : [],
+          }));
+
           return {
             level: clamp(nint(p.level, 1), 1, 20),
-            classKey: typeof p.classKey === "string" ? p.classKey : "",
-            spellMod: nint(p.spellMod, 0),
+            multiclass: !!p.multiclass,
+            classBlocks: normBlocks,
+            spellSlotsUsed: (p.spellSlotsUsed && typeof p.spellSlotsUsed === "object") ? p.spellSlotsUsed : {},
+            preparedSpellsByBlock: (p.preparedSpellsByBlock && typeof p.preparedSpellsByBlock === "object") ? p.preparedSpellsByBlock : {},
+            knownSpellsByBlock: (p.knownSpellsByBlock && typeof p.knownSpellsByBlock === "object") ? p.knownSpellsByBlock : {},
 
             statA: Number.isFinite(Number(p.statA)) ? Number(p.statA) : 0,
             statB: (p.statB ?? "-"),
             statC: (p.statC ?? "-"),
-
-            spellSlotsUsed: (p.spellSlotsUsed && typeof p.spellSlotsUsed === "object") ? p.spellSlotsUsed : {},
-            preparedSpells: (p.preparedSpells && typeof p.preparedSpells === "object") ? p.preparedSpells : {},
 
             actionUsed: !!p.actionUsed,
             bonusUsed: !!p.bonusUsed,
@@ -929,17 +981,24 @@
 
             calcExpr: typeof p.calcExpr === "string" ? p.calcExpr : "",
             calcResult: typeof p.calcResult === "string" ? p.calcResult : "0",
+
+            buildManifestUrl: typeof p.buildManifestUrl === "string" ? p.buildManifestUrl : "",
+            packageUrls: Array.isArray(p.packageUrls) ? p.packageUrls.filter(x => typeof x === "string") : [],
           };
         } catch {
           return {
             level: 1,
-            classKey: "",
-            spellMod: 0,
+            multiclass: false,
+            classBlocks: [
+              { key: "", classLevel: 1, mod: 0, packages: [] },
+              { key: "", classLevel: 0, mod: 0, packages: [] },
+            ],
+            spellSlotsUsed: {},
+            preparedSpellsByBlock: {},
+            knownSpellsByBlock: {},
             statA: 0,
             statB: "-",
             statC: "-",
-            spellSlotsUsed: {},
-            preparedSpells: {},
             actionUsed: false,
             bonusUsed: false,
             reactionUsed: false,
@@ -951,16 +1010,32 @@
             restLocks: {},
             calcExpr: "",
             calcResult: "0",
+            buildManifestUrl: "",
+            packageUrls: [],
           };
         }
       }
 
-      function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+      function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
       function normalize() {
         state.level = clamp(nint(state.level, 1), 1, 20);
-        if (typeof state.classKey !== "string") state.classKey = "";
-        state.spellMod = nint(state.spellMod, 0);
+        state.multiclass = !!state.multiclass;
+
+        if (!Array.isArray(state.classBlocks)) state.classBlocks = [{ key:"", classLevel:1, mod:0, packages:[] }, { key:"", classLevel:0, mod:0, packages:[] }];
+        while (state.classBlocks.length < 2) state.classBlocks.push({ key:"", classLevel:0, mod:0, packages:[] });
+
+        for (const b of state.classBlocks) {
+          if (typeof b.key !== "string") b.key = "";
+          b.classLevel = Math.max(0, nint(b.classLevel, 0));
+          b.mod = nint(b.mod, 0);
+          if (!Array.isArray(b.packages)) b.packages = [];
+          b.packages = b.packages.filter(x => typeof x === "string");
+        }
+
+        if (typeof state.spellSlotsUsed !== "object" || !state.spellSlotsUsed) state.spellSlotsUsed = {};
+        if (typeof state.preparedSpellsByBlock !== "object" || !state.preparedSpellsByBlock) state.preparedSpellsByBlock = {};
+        if (typeof state.knownSpellsByBlock !== "object" || !state.knownSpellsByBlock) state.knownSpellsByBlock = {};
 
         state.hpMax = Math.max(0, nint(state.hpMax, 0));
         state.hpNow = clamp(nint(state.hpNow, 0), 0, state.hpMax);
@@ -968,12 +1043,13 @@
         state.acBase = Math.max(0, nint(state.acBase, 10));
         state.attacksUsed = Math.max(0, nint(state.attacksUsed, 0));
 
-        if (typeof state.spellSlotsUsed !== "object" || !state.spellSlotsUsed) state.spellSlotsUsed = {};
-        if (typeof state.preparedSpells !== "object" || !state.preparedSpells) state.preparedSpells = {};
-
         if (typeof state.restLocks !== "object" || !state.restLocks) state.restLocks = {};
         if (typeof state.calcExpr !== "string") state.calcExpr = "";
         if (typeof state.calcResult !== "string") state.calcResult = "0";
+
+        if (typeof state.buildManifestUrl !== "string") state.buildManifestUrl = "";
+        if (!Array.isArray(state.packageUrls)) state.packageUrls = [];
+        state.packageUrls = state.packageUrls.filter(x => typeof x === "string");
       }
 
       function setStatus(msg, kind = "") {
@@ -981,20 +1057,15 @@
         el.statusBar.classList.remove("ok", "error");
         if (kind) el.statusBar.classList.add(kind);
       }
-      function setOptStatus(msg, kind = "") {
-        el.optStatus.textContent = msg || "";
-        el.optStatus.classList.remove("ok", "error");
-        if (kind) el.optStatus.classList.add(kind);
-      }
-      function setCalcStatus(msg, kind = "") {
-        el.calcStatus.textContent = msg || "";
-        el.calcStatus.classList.remove("ok", "error");
-        if (kind) el.calcStatus.classList.add(kind);
-      }
       function setSpellStatus(msg, kind = "") {
         el.spellStatus.textContent = msg || "";
         el.spellStatus.classList.remove("ok", "error");
         if (kind) el.spellStatus.classList.add(kind);
+      }
+      function setSpellsStatus(msg, kind = "") {
+        el.spellsStatus.textContent = msg || "";
+        el.spellsStatus.classList.remove("ok", "error");
+        if (kind) el.spellsStatus.classList.add(kind);
       }
       function setSpellbookStatus(msg, kind = "") {
         el.spellbookStatus.textContent = msg || "";
@@ -1005,6 +1076,11 @@
         el.castStatus.textContent = msg || "";
         el.castStatus.classList.remove("ok", "error");
         if (kind) el.castStatus.classList.add(kind);
+      }
+      function setCalcStatus(msg, kind = "") {
+        el.calcStatus.textContent = msg || "";
+        el.calcStatus.classList.remove("ok", "error");
+        if (kind) el.calcStatus.classList.add(kind);
       }
 
       function openDialog(title, desc, meta) {
@@ -1023,24 +1099,278 @@
       }
 
       function getIconsBase() {
-        return (SUPPORT && SUPPORT.meta && SUPPORT.meta.iconsBase) ? SUPPORT.meta.iconsBase : DEFAULT_ICONS_BASE;
+        return (MERGED_SUPPORT && MERGED_SUPPORT.meta && MERGED_SUPPORT.meta.iconsBase) ? MERGED_SUPPORT.meta.iconsBase : DEFAULT_ICONS_BASE;
       }
 
       function getActionIcons() {
-        return (SUPPORT && SUPPORT.meta && SUPPORT.meta.actionIcons) ? SUPPORT.meta.actionIcons : DEFAULT_ACTION_ICONS;
+        return (MERGED_SUPPORT && MERGED_SUPPORT.meta && MERGED_SUPPORT.meta.actionIcons) ? MERGED_SUPPORT.meta.actionIcons : DEFAULT_ACTION_ICONS;
       }
 
       function getMaxAttacksPerTurn() {
-        const v = SUPPORT && SUPPORT.meta && Number.isFinite(Number(SUPPORT.meta.maxAttacksPerTurn))
-          ? Number(SUPPORT.meta.maxAttacksPerTurn)
+        const v = MERGED_SUPPORT && MERGED_SUPPORT.meta && Number.isFinite(Number(MERGED_SUPPORT.meta.maxAttacksPerTurn))
+          ? Number(MERGED_SUPPORT.meta.maxAttacksPerTurn)
           : 1;
         return Math.max(1, Math.trunc(v));
       }
 
+      async function fetchJson(url) {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      }
+
+      function mergeSupportPackages(pkgs) {
+        const merged = { meta: {}, resources: {}, abilities: [], passiveAbilities: [], additionalSpells: [] };
+        for (const p of pkgs) {
+          if (!p || typeof p !== "object") continue;
+          if (p.meta && typeof p.meta === "object") merged.meta = { ...merged.meta, ...p.meta };
+          if (p.resources && typeof p.resources === "object") merged.resources = { ...merged.resources, ...p.resources };
+          if (Array.isArray(p.abilities)) merged.abilities.push(...p.abilities);
+          if (Array.isArray(p.passiveAbilities)) merged.passiveAbilities.push(...p.passiveAbilities);
+          if (Array.isArray(p.additionalSpells)) merged.additionalSpells.push(...p.additionalSpells);
+        }
+        return merged;
+      }
+
+      function getActiveBlocks() {
+        const blocks = [];
+        blocks.push({ idx: 0, key: "main", ...state.classBlocks[0] });
+        if (state.multiclass) blocks.push({ idx: 1, key: "mc1", ...state.classBlocks[1] });
+        return blocks;
+      }
+
+      async function loadPackages() {
+        PACKAGES = [];
+
+        const urls = state.packageUrls.slice();
+        const blocks = getActiveBlocks();
+        for (const b of blocks) {
+          for (const u of (state.classBlocks[b.idx].packages || [])) {
+            if (typeof u === "string" && u.trim()) urls.push(u.trim());
+          }
+        }
+
+        const unique = [];
+        const seen = new Set();
+        for (const u of urls) {
+          const k = String(u).trim();
+          if (!k || seen.has(k)) continue;
+          seen.add(k);
+          unique.push(k);
+        }
+
+        for (const u of unique) {
+          try {
+            const j = await fetchJson(u);
+            PACKAGES.push(j);
+          } catch {
+            // do not break
+          }
+        }
+
+        MERGED_SUPPORT = mergeSupportPackages(PACKAGES);
+      }
+
+      function renderResourcesFromPackages() {
+        const A = MERGED_SUPPORT.resources && MERGED_SUPPORT.resources.A ? MERGED_SUPPORT.resources.A : null;
+        const B = MERGED_SUPPORT.resources && MERGED_SUPPORT.resources.B ? MERGED_SUPPORT.resources.B : null;
+        const C = MERGED_SUPPORT.resources && MERGED_SUPPORT.resources.C ? MERGED_SUPPORT.resources.C : null;
+
+        if (A && typeof A.label === "string") {
+          el.statALabel.textContent = A.label;
+          if (typeof A.value === "number") state.statA = A.value;
+        } else el.statALabel.textContent = "Resource A";
+
+        if (B && typeof B.label === "string") {
+          el.statBLabel.textContent = B.label;
+          if (typeof B.value !== "undefined") state.statB = B.value;
+        } else el.statBLabel.textContent = "Resource B";
+
+        if (C && typeof C.label === "string") {
+          el.statCLabel.textContent = C.label;
+          if (typeof C.value !== "undefined") state.statC = C.value;
+        } else el.statCLabel.textContent = "Resource C";
+      }
+
+      async function loadSpellcasting() {
+        try {
+          SPELLCASTING = await fetchJson(SPELLCASTING_URL);
+          return true;
+        } catch {
+          SPELLCASTING = null;
+          setSpellStatus(`Failed to load spellcasting: ${SPELLCASTING_URL}`, "error");
+          return false;
+        }
+      }
+
+      async function loadSpellsIfNeeded() {
+        if (SPELLS) return true;
+        try {
+          SPELLS = await fetchJson(SPELLS_URL);
+          return true;
+        } catch {
+          SPELLS = null;
+          setSpellbookStatus(`Failed to load spells: ${SPELLS_URL}`, "error");
+          return false;
+        }
+      }
+
+      function getSpellDef(spellId) {
+        if (!SPELLS) return null;
+        if (SPELLS.spells && Array.isArray(SPELLS.spells)) {
+          for (const s of SPELLS.spells) if (s && s.id === spellId) return s;
+        }
+        if (SPELLS.spells && SPELLS.spells[spellId]) return SPELLS.spells[spellId];
+        if (SPELLS[spellId]) return SPELLS[spellId];
+        return null;
+      }
+
+      function spellLevelLabel(lv) {
+        const n = Number(lv);
+        if (!Number.isFinite(n)) return "Unknown";
+        if (n === 0) return "Cantrip";
+        return `Level ${n}`;
+      }
+
+      function safeStr(v) { return (typeof v === "string") ? v : ""; }
+
+      function formatSpellDetails(s) {
+        if (!s) return "";
+        const parts = [];
+        const lvl = Number.isFinite(Number(s.level)) ? Number(s.level) : 0;
+        const school = s.school || s.schoolName || "";
+        parts.push(`${spellLevelLabel(lvl)}${school ? " " + school : ""}`);
+        const ct = s.castingTime || s.casting_time || s.time || "";
+        if (ct) parts.push(`Casting Time: ${ct}`);
+        if (s.range) parts.push(`Range: ${s.range}`);
+        if (s.components) parts.push(`Components: ${s.components}`);
+        if (s.duration) parts.push(`Duration: ${s.duration}`);
+        if (typeof s.ritual === "boolean") parts.push(`Ritual: ${s.ritual ? "Yes" : "No"}`);
+        if (typeof s.concentration === "boolean") parts.push(`Concentration: ${s.concentration ? "Yes" : "No"}`);
+        return parts.join("\n");
+      }
+
+      function splitHigherLevels(s) {
+        const higher = safeStr(s.higherLevels || s.higher_levels || s.atHigherLevels || s.higher);
+        const desc = safeStr(s.description || s.desc || s.text || s.rulesText);
+        if (higher.trim()) return { base: desc.trim(), higher: higher.trim() };
+
+        const idx = desc.toLowerCase().indexOf("at higher levels");
+        if (idx === -1) return { base: desc.trim(), higher: "" };
+        const base = desc.slice(0, idx).trim();
+        let rest = desc.slice(idx).trim();
+        rest = rest.replace(/^at higher levels\s*[:.\-]?\s*/i, "");
+        return { base, higher: rest.trim() };
+      }
+
+      function inferEconomyFromCastingTime(ct) {
+        const t = String(ct || "").toLowerCase();
+        if (t.includes("reaction")) return "reaction";
+        if (t.includes("bonus")) return "bonus";
+        return "action";
+      }
+
+      function getClassDef(classKey) {
+        if (!SPELLCASTING || !SPELLCASTING.classes) return null;
+        return SPELLCASTING.classes[classKey] || null;
+      }
+
+      function isPreparedCaster(classDef) {
+        if (!classDef) return false;
+        if (classDef.type === "prepared") return true;
+        if (classDef.prepared && classDef.prepared.type === "prepared") return true;
+        return false;
+      }
+
+      function isKnownCaster(classDef) {
+        if (!classDef) return false;
+        return classDef.type === "known";
+      }
+
+      function isPactCaster(classDef) {
+        if (!classDef) return false;
+        if (classDef.type === "pact") return true;
+        const progKey = classDef.progressionKey || classDef.progression;
+        const prog = (SPELLCASTING && SPELLCASTING.progressions && progKey) ? (SPELLCASTING.progressions[progKey] || null) : null;
+        return !!(prog && prog.pactMagicTable);
+      }
+
+      function spellAbilityLabelForClass(classDef) {
+        const a = String(classDef && (classDef.spellAbility || (classDef.prepared && classDef.prepared.ability) || classDef.ability) || "").toUpperCase();
+        if (a.includes("INT")) return "INT";
+        if (a.includes("WIS")) return "WIS";
+        if (a.includes("CHA")) return "CHA";
+        return "Mod";
+      }
+
+      function computePreparedLimit(classDef, classLevel, mod) {
+        if (!isPreparedCaster(classDef)) return 0;
+        const lvl = Math.max(1, nint(classLevel, 1));
+        const m = nint(mod, 0);
+        const f = String((classDef.prepared && classDef.prepared.formula) || classDef.preparedFormula || "").toUpperCase();
+        let val = 0;
+        if (f.includes("/2") || f.includes("LEVEL/2")) val = m + Math.floor(lvl / 2);
+        else val = m + lvl;
+
+        const min = Number.isFinite(Number((classDef.prepared && classDef.prepared.min) || classDef.preparedMin)) ? Number((classDef.prepared && classDef.prepared.min) || classDef.preparedMin) : 1;
+        return Math.max(min, Math.trunc(val));
+      }
+
+      function computeKnownLimit(classDef, classLevel) {
+        if (!isKnownCaster(classDef)) return 0;
+        const lvl = Math.max(1, nint(classLevel, 1));
+        if (classDef.knownTable && typeof classDef.knownTable === "object") {
+          const v = classDef.knownTable[String(lvl)] ?? classDef.knownTable[lvl];
+          if (Number.isFinite(Number(v))) return Math.max(0, Math.trunc(Number(v)));
+        }
+        return 0;
+      }
+
+      function getClassSpellIdsForClassKey(classKey) {
+        const cd = getClassDef(classKey);
+        if (!cd || !cd.spellListByLevel) return [];
+        const keys = Object.keys(cd.spellListByLevel).map(x => Number(x)).filter(n => Number.isFinite(n));
+        keys.sort((a,b)=>a-b);
+        const out = [];
+        for (const k of keys) {
+          const arr = cd.spellListByLevel[String(k)];
+          if (!Array.isArray(arr)) continue;
+          for (const it of arr) if (it && it.id) out.push(it.id);
+        }
+        return Array.from(new Set(out));
+      }
+
+      function getPackageSpellIdsForClassKey(classKey) {
+        const out = [];
+        const list = (MERGED_SUPPORT && Array.isArray(MERGED_SUPPORT.additionalSpells)) ? MERGED_SUPPORT.additionalSpells : [];
+        for (const entry of list) {
+          if (!entry || typeof entry !== "object") continue;
+          if (String(entry.classKey || "") !== String(classKey || "")) continue;
+          const byLevel = entry.spellsByLevel;
+          if (!byLevel || typeof byLevel !== "object") continue;
+          for (const k of Object.keys(byLevel)) {
+            const arr = byLevel[k];
+            if (!Array.isArray(arr)) continue;
+            for (const sid of arr) if (typeof sid === "string") out.push(sid);
+          }
+        }
+        return Array.from(new Set(out));
+      }
+
+      function getGrantedSpellIdsForClassKey(classKey) {
+        // Granted spells are package spells not in class list
+        const base = new Set(getClassSpellIdsForClassKey(classKey));
+        const pkg = getPackageSpellIdsForClassKey(classKey);
+        return pkg.filter(id => !base.has(id));
+      }
+
+      /* ---------- Action economy ---------- */
       function consumeEconomy(kind) {
         if (kind === "action") {
           if (state.actionUsed) return false;
           state.actionUsed = true;
+          // If you spend your action on anything, you cannot use Basic Attack.
+          state.attacksUsed = getMaxAttacksPerTurn();
           return true;
         }
         if (kind === "bonus") {
@@ -1058,6 +1388,7 @@
 
       function useActionAttack() {
         const maxAttacks = getMaxAttacksPerTurn();
+        if (state.actionUsed) return false;
         if (state.attacksUsed >= maxAttacks) return false;
         state.actionUsed = true;
         state.attacksUsed += 1;
@@ -1069,46 +1400,46 @@
         state.bonusUsed = false;
         state.reactionUsed = false;
         state.attacksUsed = 0;
-        saveState(state);
+        saveState();
         render();
         setStatus("Next turn: action economy refreshed.", "ok");
       }
 
+      /* ---------- Rest ---------- */
       function doShortRest() {
-        if (SUPPORT) {
-          for (const a of SUPPORT.abilities || []) {
-            if (a && a.id && a.usage && a.usage.type === "oncePerShortRest") {
-              delete state.restLocks[a.id];
-            }
+        // clear short-rest locks on abilities
+        for (const a of (MERGED_SUPPORT.abilities || [])) {
+          if (a && a.id && a.usage && a.usage.type === "oncePerShortRest") delete state.restLocks[a.id];
+        }
+
+        // reset pact slots on short rest
+        const blocks = getActiveBlocks();
+        for (const b of blocks) {
+          const cd = getClassDef(state.classBlocks[b.idx].key);
+          if (cd && isPactCaster(cd)) {
+            setUsedSlots("pact:" + b.key, "pact", 0);
           }
         }
 
-        const classDef = getSelectedClassDef();
-        const prog = classDef ? getProgressionDef(classDef.progression) : null;
-        if (prog && prog.pactMagicTable) {
-          state.spellSlotsUsed["pact"] = 0;
-        }
-
-        saveState(state);
+        saveState();
         render();
-        setStatus("Short rest: short-rest locks cleared.", "ok");
+        setStatus("Short rest: short-rest locks cleared, pact slots refreshed.", "ok");
       }
 
       function doLongRest() {
-        if (SUPPORT) {
-          for (const a of SUPPORT.abilities || []) {
-            if (a && a.id && a.usage && (a.usage.type === "oncePerShortRest" || a.usage.type === "oncePerLongRest")) {
-              delete state.restLocks[a.id];
-            }
-          }
+        // clear short/long rest locks
+        for (const a of (MERGED_SUPPORT.abilities || [])) {
+          if (a && a.id && a.usage && (a.usage.type === "oncePerShortRest" || a.usage.type === "oncePerLongRest")) delete state.restLocks[a.id];
         }
 
+        // reset all spell slots (pooled + pact)
         state.spellSlotsUsed = {};
-        saveState(state);
+        saveState();
         render();
-        setStatus("Long rest: long-rest locks cleared.", "ok");
+        setStatus("Long rest: locks cleared and spell slots refreshed.", "ok");
       }
 
+      /* ---------- HP ---------- */
       function applyDamage(amount) {
         amount = Math.max(0, Number(amount) || 0);
         if (amount <= 0) return { usedTemp: 0, usedHp: 0 };
@@ -1128,42 +1459,763 @@
         return state.hpNow - before;
       }
 
-      function renderCoreStats() {
-        el.statAText.textContent = String(state.statA);
-        el.statBText.textContent = String(state.statB);
-        el.statCText.textContent = String(state.statC);
+      /* ---------- Storage helpers for slots ---------- */
+      function slotKey(bucket, levelKey) { return `${bucket}:${levelKey}`; }
+      function getUsedSlots(bucket, levelKey) {
+        const v = state.spellSlotsUsed[slotKey(bucket, levelKey)];
+        return Math.max(0, nint(v, 0));
+      }
+      function setUsedSlots(bucket, levelKey, used) {
+        state.spellSlotsUsed[slotKey(bucket, levelKey)] = Math.max(0, nint(used, 0));
       }
 
-      function renderCombat() {
-        el.hpNowText.textContent = String(state.hpNow);
-        el.hpMaxText.textContent = String(state.hpMax);
-        el.hpTempText.textContent = String(state.hpTemp);
-        el.acText.textContent = String(state.acBase);
-
-        el.hpMaxInput.value = String(state.hpMax);
-        el.hpTempInput.value = String(state.hpTemp);
-        el.acInput.value = String(state.acBase);
+      function resetAllSlots() {
+        state.spellSlotsUsed = {};
+        saveState();
       }
 
-      function updateEconomyIcons() {
-        const base = getIconsBase();
-        const A = getActionIcons();
-        el.iconAction.src = base + (state.actionUsed ? A.actionUsed : A.action);
-        el.iconBonus.src = base + (state.bonusUsed ? A.bonusUsed : A.bonus);
-        el.iconReaction.src = base + (state.reactionUsed ? A.reactionUsed : A.reaction);
+      /* ---------- Multiclass pooled slot math ---------- */
+      function canPoolSlots() {
+        return !!(SPELLCASTING && SPELLCASTING.meta && SPELLCASTING.meta.multiclassPooling === true);
       }
 
-      function renderEconomyButtons() {
-        const maxAttacks = getMaxAttacksPerTurn();
-        el.basicAttack.disabled = state.attacksUsed >= maxAttacks;
-        el.actionOptions.disabled = state.actionUsed;
-        el.offhandAttack.disabled = state.bonusUsed;
-        el.bonusOptions.disabled = state.bonusUsed;
-        el.oppAttack.disabled = state.reactionUsed;
-        el.readiedAttack.disabled = state.reactionUsed;
-        el.reactionOptions.disabled = state.reactionUsed;
+      function computeCasterLevelPooled() {
+        // Uses spellcasting.json class fields if present:
+        // - multiclassFactor {numerator, denominator, rounding}
+        // Fallback inference by progressionKey naming.
+        const blocks = getActiveBlocks();
+        let total = 0;
+
+        for (const b of blocks) {
+          const ck = state.classBlocks[b.idx].key;
+          const cd = getClassDef(ck);
+          if (!cd) continue;
+
+          if (isPactCaster(cd)) continue;
+
+          if (cd.multiclassFactor && typeof cd.multiclassFactor === "object") {
+            const num = Number(cd.multiclassFactor.numerator);
+            const den = Number(cd.multiclassFactor.denominator);
+            const rnd = String(cd.multiclassFactor.rounding || "down");
+            if (Number.isFinite(num) && Number.isFinite(den) && den > 0) {
+              const raw = (state.classBlocks[b.idx].classLevel * num) / den;
+              total += (rnd === "up") ? Math.ceil(raw) : Math.floor(raw);
+              continue;
+            }
+          }
+
+          const progKey = String(cd.progressionKey || cd.progression || "").toLowerCase();
+          const lvl = state.classBlocks[b.idx].classLevel;
+
+          if (progKey.includes("full")) total += lvl;
+          else if (progKey.includes("half")) total += Math.floor(lvl / 2);
+          else if (progKey.includes("third")) total += Math.floor(lvl / 3);
+          else total += lvl;
+        }
+
+        return clamp(total, 1, 20);
       }
 
+      function getPooledSlotsForCasterLevel(casterLevel) {
+        // Prefer "full" progression table as the pooled table (5e standard)
+        const progs = (SPELLCASTING && SPELLCASTING.progressions) ? SPELLCASTING.progressions : null;
+        if (!progs) return [];
+        let full = null;
+
+        for (const k of Object.keys(progs)) {
+          const p = progs[k];
+          if (!p || !p.slotTable) continue;
+          if (String(k).toLowerCase().includes("full")) { full = p; break; }
+        }
+        if (!full) {
+          for (const k of Object.keys(progs)) {
+            const p = progs[k];
+            if (p && p.slotTable) { full = p; break; }
+          }
+        }
+
+        if (!full || !full.slotTable) return [];
+        const lvl = clamp(nint(casterLevel, 1), 1, 20);
+        const arr = full.slotTable[String(lvl)] || full.slotTable[lvl];
+        if (!Array.isArray(arr)) return [];
+        return arr.map(x => Math.max(0, nint(x, 0)));
+      }
+
+      function renderStandardSlotsBar(bucket, levelsArr, label) {
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.textContent = `${label}`;
+        el.spellSlotsWrap.appendChild(header);
+
+        for (let idx = 0; idx < levelsArr.length; idx++) {
+          const max = levelsArr[idx];
+          const spellLevel = idx + 1;
+          if (max <= 0) continue;
+
+          const levelKey = String(spellLevel);
+          const used = clamp(getUsedSlots(bucket, levelKey), 0, max);
+          if (used !== getUsedSlots(bucket, levelKey)) setUsedSlots(bucket, levelKey, used);
+
+          const row = document.createElement("div");
+          row.className = "slotRow";
+
+          const left = document.createElement("div");
+          left.className = "slotLabel";
+          left.textContent = `Level ${spellLevel}`;
+
+          const right = document.createElement("div");
+          right.className = "slotBubbles";
+
+          for (let i = 0; i < max; i++) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "slotBubble" + (i < used ? " used" : "");
+            btn.textContent = String(spellLevel);
+            btn.addEventListener("click", async () => {
+              const nowUsed = getUsedSlots(bucket, levelKey);
+              const nextUsed = (i < nowUsed) ? i : (i + 1);
+              setUsedSlots(bucket, levelKey, clamp(nextUsed, 0, max));
+              saveState();
+              await render();
+            });
+            right.appendChild(btn);
+          }
+
+          row.appendChild(left);
+          row.appendChild(right);
+          el.spellSlotsWrap.appendChild(row);
+        }
+      }
+
+      function renderPactSlotsBar(bucket, slots, label) {
+        const header = document.createElement("div");
+        header.className = "sub";
+        header.textContent = `${label} Pact Magic (Slot Level ${slots.slotLevel})`;
+        el.spellSlotsWrap.appendChild(header);
+
+        const row = document.createElement("div");
+        row.className = "slotRow";
+
+        const left = document.createElement("div");
+        left.className = "slotLabel";
+        left.textContent = `Pact Slots (L${slots.slotLevel})`;
+
+        const right = document.createElement("div");
+        right.className = "slotBubbles";
+
+        const used = clamp(getUsedSlots(bucket, "pact"), 0, slots.slots);
+        if (used !== getUsedSlots(bucket, "pact")) setUsedSlots(bucket, "pact", used);
+
+        for (let i = 0; i < slots.slots; i++) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "slotBubble" + (i < used ? " used" : "");
+          btn.textContent = "★";
+          btn.addEventListener("click", async () => {
+            const nowUsed = getUsedSlots(bucket, "pact");
+            const nextUsed = (i < nowUsed) ? i : (i + 1);
+            setUsedSlots(bucket, "pact", clamp(nextUsed, 0, slots.slots));
+            saveState();
+            await render();
+          });
+          right.appendChild(btn);
+        }
+
+        row.appendChild(left);
+        row.appendChild(right);
+        el.spellSlotsWrap.appendChild(row);
+      }
+
+      function getPactSlotsForClassAtLevel(classDef, classLevel) {
+        const progKey = classDef.progressionKey || classDef.progression;
+        const prog = (SPELLCASTING && SPELLCASTING.progressions && progKey) ? (SPELLCASTING.progressions[progKey] || null) : null;
+        if (!prog || !prog.pactMagicTable) return null;
+        const lvl = clamp(nint(classLevel, 1), 1, 20);
+        const row = prog.pactMagicTable[String(lvl)] || prog.pactMagicTable[lvl];
+        if (!row) return { slots: 0, slotLevel: 1 };
+        return { slots: Math.max(0, nint(row.slots, 0)), slotLevel: Math.max(1, nint(row.slotLevel, 1)) };
+      }
+
+      function renderSpellSlots() {
+        el.spellSlotsWrap.innerHTML = "";
+        el.spellMetaText.textContent = "";
+
+        if (!SPELLCASTING) {
+          el.spellMetaText.textContent = "Spellcasting rules not loaded.";
+          return;
+        }
+
+        const blocks = getActiveBlocks();
+        const sum = blocks.reduce((a,b)=>a + Math.max(0, nint(state.classBlocks[b.idx].classLevel, 0)), 0);
+        if (sum !== state.level) {
+          el.classWarning.textContent = `Class levels sum to ${sum}. Character level is ${state.level}. Slots and spell limits use class levels.`;
+        } else {
+          el.classWarning.textContent = "";
+        }
+
+        const usePooling = (blocks.length > 1) && canPoolSlots();
+        if (usePooling) {
+          const casterLevel = computeCasterLevelPooled();
+          const pooled = getPooledSlotsForCasterLevel(casterLevel);
+          renderStandardSlotsBar("pooled", pooled, `Pooled Spell Slots (Caster Level ${casterLevel})`);
+
+          // Pact magic remains separate
+          for (const b of blocks) {
+            const ck = state.classBlocks[b.idx].key;
+            const cd = getClassDef(ck);
+            if (!cd || !isPactCaster(cd)) continue;
+            const pact = getPactSlotsForClassAtLevel(cd, state.classBlocks[b.idx].classLevel);
+            if (pact) renderPactSlotsBar("pact:" + b.key, pact, ck);
+          }
+          return;
+        }
+
+        // If single class or pooling disabled in json, show per class
+        for (const b of blocks) {
+          const ck = state.classBlocks[b.idx].key;
+          const cd = getClassDef(ck);
+          if (!cd) continue;
+
+          if (isPactCaster(cd)) {
+            const pact = getPactSlotsForClassAtLevel(cd, state.classBlocks[b.idx].classLevel);
+            if (pact) renderPactSlotsBar("pact:" + b.key, pact, ck);
+            continue;
+          }
+
+          const progKey = cd.progressionKey || cd.progression;
+          const prog = (SPELLCASTING && SPELLCASTING.progressions && progKey) ? (SPELLCASTING.progressions[progKey] || null) : null;
+          const lvl = clamp(nint(state.classBlocks[b.idx].classLevel, 1), 1, 20);
+          const arr = prog && prog.slotTable ? (prog.slotTable[String(lvl)] || prog.slotTable[lvl]) : null;
+          const levels = Array.isArray(arr) ? arr.map(x => Math.max(0, nint(x, 0))) : [];
+          renderStandardSlotsBar(ck, levels, `${ck} Slots`);
+        }
+      }
+
+      /* ---------- Spells: picks + display ---------- */
+      function getBlockSpellPickList(blockKey, kind) {
+        const obj = (kind === "prepared") ? state.preparedSpellsByBlock : state.knownSpellsByBlock;
+        const arr = obj[blockKey];
+        if (!Array.isArray(arr)) return [];
+        return arr.filter(x => typeof x === "string");
+      }
+
+      function setBlockSpellPickList(blockKey, kind, list) {
+        const obj = (kind === "prepared") ? state.preparedSpellsByBlock : state.knownSpellsByBlock;
+        obj[blockKey] = Array.from(new Set((list || []).filter(x => typeof x === "string")));
+      }
+
+      function getCombinedSpellCardsToRender() {
+        // What appears in the spells section are spells you can cast:
+        // - prepared spells (prepared casters)
+        // - known spells (known casters)
+        // - granted spells (packages) (always available)
+        const blocks = getActiveBlocks();
+        const out = [];
+
+        for (const b of blocks) {
+          const classKey = state.classBlocks[b.idx].key;
+          if (!classKey) continue;
+
+          const cd = getClassDef(classKey);
+          if (!cd) continue;
+
+          const granted = getGrantedSpellIdsForClassKey(classKey).map(id => ({
+            id, source: "granted", blockKey: b.key, classKey
+          }));
+
+          if (isPreparedCaster(cd)) {
+            const prepared = getBlockSpellPickList(b.key, "prepared").map(id => ({
+              id, source: "prepared", blockKey: b.key, classKey
+            }));
+            out.push(...prepared, ...granted);
+          } else if (isKnownCaster(cd) || isPactCaster(cd)) {
+            const known = getBlockSpellPickList(b.key, "known").map(id => ({
+              id, source: "known", blockKey: b.key, classKey
+            }));
+            out.push(...known, ...granted);
+          } else {
+            out.push(...granted);
+          }
+        }
+
+        // de-dupe by (id + source + blockKey), but allow same spell in different class blocks
+        const seen = new Set();
+        const dedup = [];
+        for (const x of out) {
+          const k = `${x.blockKey}|${x.source}|${x.id}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          dedup.push(x);
+        }
+        return dedup;
+      }
+
+      function renderSpellsSection() {
+        el.spellsGrid.innerHTML = "";
+        setSpellsStatus("");
+
+        const blocks = getActiveBlocks();
+        const visibleBlocks = blocks.map(b => state.classBlocks[b.idx].key).filter(Boolean);
+        el.spellsSectionTitle.textContent = (visibleBlocks.length <= 1)
+          ? "Spells"
+          : `Spells (${visibleBlocks.join(" + ")})`;
+
+        // Prepare limit text
+        const parts = [];
+        for (const b of blocks) {
+          const classKey = state.classBlocks[b.idx].key;
+          if (!classKey) continue;
+          const cd = getClassDef(classKey);
+          if (!cd) continue;
+
+          if (isPreparedCaster(cd)) {
+            const limit = computePreparedLimit(cd, state.classBlocks[b.idx].classLevel, state.classBlocks[b.idx].mod);
+            const picked = getBlockSpellPickList(b.key, "prepared").length;
+            parts.push(`${classKey}: Prepared ${picked}/${limit}`);
+          } else if (isKnownCaster(cd) || isPactCaster(cd)) {
+            const limit = computeKnownLimit(cd, state.classBlocks[b.idx].classLevel);
+            const picked = getBlockSpellPickList(b.key, "known").length;
+            parts.push(limit > 0 ? `${classKey}: Known ${picked}/${limit}` : `${classKey}: Known ${picked}`);
+          }
+        }
+        el.spellsLimitText.textContent = parts.join("   |   ");
+
+        const cards = getCombinedSpellCardsToRender();
+        if (cards.length === 0) {
+          const e = document.createElement("div");
+          e.className = "sub";
+          e.textContent = "No spells selected yet. Use Manage Spells or load package spells.";
+          el.spellsGrid.appendChild(e);
+          return;
+        }
+
+        for (const c of cards) {
+          const def = getSpellDef(c.id);
+          const name = def ? (def.name || c.id) : c.id;
+          const level = def ? Number(def.level) : NaN;
+          const ct = def ? (def.castingTime || def.casting_time || def.time || "") : "";
+          const econ = inferEconomyFromCastingTime(ct);
+          const sourceTag = (c.source === "granted") ? "Granted" : (c.source === "prepared" ? "Prepared" : "Known");
+
+          const card = document.createElement("div");
+          card.className = "spellCard";
+
+          const left = document.createElement("div");
+          const nm = document.createElement("div");
+          nm.className = "spellName";
+          nm.textContent = name;
+
+          const meta = document.createElement("div");
+          meta.className = "spellMeta";
+          meta.textContent = `${sourceTag} | ${spellLevelLabel(level)} | ${ct || "Casting: (unknown)"}`;
+
+          left.appendChild(nm);
+          left.appendChild(meta);
+
+          const btns = document.createElement("div");
+          btns.className = "spellBtns";
+
+          const castBtn = document.createElement("button");
+          castBtn.className = "btn";
+          castBtn.type = "button";
+          castBtn.textContent = "Cast";
+          castBtn.addEventListener("click", async () => {
+            await openCastDialog(c.id, c.classKey, c.source);
+          });
+
+          const q = document.createElement("button");
+          q.className = "qBtn";
+          q.type = "button";
+          q.textContent = "?";
+          q.addEventListener("click", () => {
+            const s = getSpellDef(c.id);
+            if (!s) { openDialog(name, "Spell definition not found in spells.json.", `${sourceTag} | ${c.classKey}`); return; }
+            const details = formatSpellDetails(s);
+            const split = splitHigherLevels(s);
+            const fullText = [
+              split.base || "",
+              split.higher ? ("\nAt Higher Levels:\n" + split.higher) : ""
+            ].join("").trim();
+
+            openDialog(s.name || c.id, fullText || "(No text)", details);
+          });
+
+          btns.appendChild(castBtn);
+          btns.appendChild(q);
+
+          card.appendChild(left);
+          card.appendChild(btns);
+          el.spellsGrid.appendChild(card);
+        }
+      }
+
+      /* ---------- Cast dialog ---------- */
+      function getRemainingSlotsForLevel(bucket, levelKey, max) {
+        const used = getUsedSlots(bucket, levelKey);
+        return Math.max(0, max - used);
+      }
+
+      function getAvailableSlotOptionsForSpell(spellDef, classKey) {
+        const options = [];
+        if (!spellDef) return options;
+
+        const spellLevel = Number.isFinite(Number(spellDef.level)) ? Number(spellDef.level) : 0;
+        if (spellLevel === 0) {
+          options.push({ key: "cantrip", label: "Cantrip (no slot)", bucket: "", levelKey: "", max: 0 });
+          return options;
+        }
+
+        const blocks = getActiveBlocks();
+        const multi = (blocks.length > 1) && canPoolSlots();
+        const cd = getClassDef(classKey);
+
+        // Standard pooled slots
+        if (multi) {
+          const casterLevel = computeCasterLevelPooled();
+          const pooled = getPooledSlotsForCasterLevel(casterLevel);
+          for (let i = spellLevel; i <= 9; i++) {
+            const max = pooled[i - 1] || 0;
+            if (max <= 0) continue;
+            const remaining = getRemainingSlotsForLevel("pooled", String(i), max);
+            options.push({ key: String(i), label: `Slot ${i} (remaining ${remaining}/${max})`, bucket: "pooled", levelKey: String(i), max });
+          }
+        } else {
+          // single class standard
+          if (cd && !isPactCaster(cd)) {
+            const progKey = cd.progressionKey || cd.progression;
+            const prog = (SPELLCASTING && SPELLCASTING.progressions && progKey) ? (SPELLCASTING.progressions[progKey] || null) : null;
+            const lvl = clamp(nint(getClassLevelForClassKey(classKey), 1), 1, 20);
+            const arr = prog && prog.slotTable ? (prog.slotTable[String(lvl)] || prog.slotTable[lvl]) : null;
+            const levels = Array.isArray(arr) ? arr.map(x => Math.max(0, nint(x, 0))) : [];
+            for (let i = spellLevel; i <= 9; i++) {
+              const max = levels[i - 1] || 0;
+              if (max <= 0) continue;
+              const remaining = getRemainingSlotsForLevel(classKey, String(i), max);
+              options.push({ key: String(i), label: `Slot ${i} (remaining ${remaining}/${max})`, bucket: classKey, levelKey: String(i), max });
+            }
+          }
+        }
+
+        // Pact magic slots (if class is warlock, etc.), allow only at its pact level
+        if (cd && isPactCaster(cd)) {
+          // Find which active block matches this classKey
+          const b = findBlockForClassKey(classKey);
+          if (b) {
+            const pact = getPactSlotsForClassAtLevel(cd, state.classBlocks[b.idx].classLevel);
+            if (pact && pact.slots > 0) {
+              const pactLevel = pact.slotLevel;
+              if (pactLevel >= spellLevel) {
+                const bucket = "pact:" + b.key;
+                const used = getUsedSlots(bucket, "pact");
+                const remaining = Math.max(0, pact.slots - used);
+                options.push({ key: "pact", label: `Pact Slot L${pactLevel} (remaining ${remaining}/${pact.slots})`, bucket, levelKey: "pact", max: pact.slots, pactLevel });
+              }
+            }
+          }
+        }
+
+        return options;
+      }
+
+      function getClassLevelForClassKey(classKey) {
+        const blocks = getActiveBlocks();
+        for (const b of blocks) {
+          if (state.classBlocks[b.idx].key === classKey) return state.classBlocks[b.idx].classLevel;
+        }
+        return state.level;
+      }
+
+      function findBlockForClassKey(classKey) {
+        const blocks = getActiveBlocks();
+        for (const b of blocks) {
+          if (state.classBlocks[b.idx].key === classKey) return b;
+        }
+        return null;
+      }
+
+      async function openCastDialog(spellId, classKey, sourceKind) {
+        await loadSpellsIfNeeded();
+
+        const s = getSpellDef(spellId);
+        if (!s) {
+          setSpellsStatus("Spell definition missing in spells.json.", "error");
+          return;
+        }
+
+        currentCastSpellId = spellId;
+        currentCastSourceKey = classKey;
+
+        el.castTitle.textContent = `Cast: ${s.name || spellId}`;
+
+        // Economy select: inferred from casting time, but editable
+        const ct = s.castingTime || s.casting_time || s.time || "";
+        const inferred = inferEconomyFromCastingTime(ct);
+        el.castEconomy.innerHTML = "";
+
+        const econOpts = [
+          { v: "action", t: "Action" },
+          { v: "bonus", t: "Bonus Action" },
+          { v: "reaction", t: "Reaction" },
+          { v: "none", t: "No Action (reference)" },
+        ];
+        for (const o of econOpts) {
+          const opt = document.createElement("option");
+          opt.value = o.v;
+          opt.textContent = o.t;
+          el.castEconomy.appendChild(opt);
+        }
+        el.castEconomy.value = inferred;
+
+        const details = formatSpellDetails(s);
+        const split = splitHigherLevels(s);
+
+        el.castDetailsText.textContent = details || "";
+        el.castRulesText.textContent = split.base || "";
+        el.castHigherText.textContent = split.higher || "(None)";
+
+        // Slot level select
+        const slotOpts = getAvailableSlotOptionsForSpell(s, classKey);
+        el.castSlotLevel.innerHTML = "";
+        if (slotOpts.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "none";
+          opt.textContent = "No slot options available";
+          el.castSlotLevel.appendChild(opt);
+          el.castSlotLevel.disabled = true;
+        } else {
+          el.castSlotLevel.disabled = false;
+          for (const o of slotOpts) {
+            const opt = document.createElement("option");
+            opt.value = o.key;
+            opt.textContent = o.label;
+            opt.dataset.bucket = o.bucket;
+            opt.dataset.levelKey = o.levelKey;
+            opt.dataset.max = String(o.max || 0);
+            opt.dataset.pactLevel = String(o.pactLevel || "");
+            el.castSlotLevel.appendChild(opt);
+          }
+        }
+
+        setCastStatus("");
+
+        if (typeof el.castDialog.showModal === "function") el.castDialog.showModal();
+        else alert("Cast dialog not supported in this browser.");
+      }
+
+      function castConfirm() {
+        if (!currentCastSpellId || !currentCastSourceKey) return;
+
+        const s = getSpellDef(currentCastSpellId);
+        if (!s) { setCastStatus("Spell definition missing.", "error"); return; }
+
+        const econ = String(el.castEconomy.value || "action");
+        if (econ !== "none") {
+          if (!consumeEconomy(econ)) {
+            setCastStatus(`${actionTypeLabel(econ)} already used this turn.`, "error");
+            return;
+          }
+        }
+
+        const spellLevel = Number.isFinite(Number(s.level)) ? Number(s.level) : 0;
+
+        // Spend slot (unless cantrip)
+        if (spellLevel > 0) {
+          const opt = el.castSlotLevel.selectedOptions && el.castSlotLevel.selectedOptions[0] ? el.castSlotLevel.selectedOptions[0] : null;
+          if (!opt) { setCastStatus("Select a slot.", "error"); return; }
+          const bucket = opt.dataset.bucket || "";
+          const levelKey = opt.dataset.levelKey || "";
+          const max = Math.max(0, nint(opt.dataset.max, 0));
+          const used = getUsedSlots(bucket, levelKey);
+          if (used >= max) { setCastStatus("No slots remaining at that level.", "error"); return; }
+          setUsedSlots(bucket, levelKey, used + 1);
+        }
+
+        saveState();
+        render();
+        setCastStatus("Cast recorded. (Action economy and slots updated.)", "ok");
+      }
+
+      /* ---------- Spellbook (manage prepared/known) ---------- */
+      function currentPrimaryBlock() {
+        // Spellbook manages the "main" block by default, unless multiclass and user toggles via dropdown.
+        // For simplicity, manage main if exists, else first active.
+        return getActiveBlocks()[0];
+      }
+
+      function renderSpellbook() {
+        setSpellbookStatus("");
+        el.spellbookList.innerHTML = "";
+        el.spellbookRightList.innerHTML = "";
+
+        const blocks = getActiveBlocks();
+        const first = blocks[0];
+        const classKey = state.classBlocks[first.idx].key;
+
+        if (!classKey) {
+          const d = document.createElement("div");
+          d.className = "sub";
+          d.textContent = "Select a class to view spells.";
+          el.spellbookList.appendChild(d);
+          return;
+        }
+
+        const cd = getClassDef(classKey);
+        if (!cd) {
+          const d = document.createElement("div");
+          d.className = "sub";
+          d.textContent = "Class not found in spellcasting.json.";
+          el.spellbookList.appendChild(d);
+          return;
+        }
+
+        const mode = isPreparedCaster(cd) ? "prepared" : "known";
+        const classLevel = state.classBlocks[first.idx].classLevel;
+        const mod = state.classBlocks[first.idx].mod;
+
+        // Title and instructions
+        if (isPreparedCaster(cd)) {
+          const limit = computePreparedLimit(cd, classLevel, mod);
+          el.spellbookMainTitle.textContent = `Class Spells (Prepare up to ${limit})`;
+          el.spellbookRightTitle.textContent = "Package (Subclass) Spells (Granted)";
+        } else {
+          const limit = computeKnownLimit(cd, classLevel);
+          el.spellbookMainTitle.textContent = (limit > 0) ? `Class Spells (Known up to ${limit})` : "Class Spells (Known)";
+          el.spellbookRightTitle.textContent = "Package (Subclass) Spells (Granted)";
+        }
+
+        const search = String(el.spellSearch.value || "").trim().toLowerCase();
+        const lvFilter = String(el.spellLevelFilter.value || "all");
+
+        const classSpellIds = getClassSpellIdsForClassKey(classKey);
+        const grantedIds = getGrantedSpellIdsForClassKey(classKey);
+
+        const picked = getBlockSpellPickList(first.key, mode);
+        const pickedSet = new Set(picked);
+
+        function spellMatches(id) {
+          const s = getSpellDef(id);
+          const name = (s && s.name) ? s.name.toLowerCase() : id.toLowerCase();
+          if (search && !name.includes(search)) return false;
+
+          if (lvFilter !== "all") {
+            const lv = s ? Number(s.level) : NaN;
+            if (!Number.isFinite(lv)) return false;
+            if (String(lv) !== lvFilter) return false;
+          }
+          return true;
+        }
+
+        // Left side: class spells selectable (prepared/known)
+        for (const sid of classSpellIds) {
+          if (!spellMatches(sid)) continue;
+          const s = getSpellDef(sid);
+          const name = s ? (s.name || sid) : sid;
+          const lv = s ? Number(s.level) : NaN;
+
+          const b = document.createElement("button");
+          b.className = "btn";
+          b.type = "button";
+
+          const isPicked = pickedSet.has(sid);
+          b.textContent = isPicked ? `✓ ${name}` : name;
+
+          b.addEventListener("click", () => {
+            const now = getBlockSpellPickList(first.key, mode);
+            const set = new Set(now);
+
+            if (set.has(sid)) set.delete(sid);
+            else {
+              // enforce limit if present
+              if (isPreparedCaster(cd)) {
+                const limit = computePreparedLimit(cd, classLevel, mod);
+                if (set.size >= limit) { setSpellbookStatus(`Prepared limit reached (${limit}).`, "error"); return; }
+              } else {
+                const limit = computeKnownLimit(cd, classLevel);
+                if (limit > 0 && set.size >= limit) { setSpellbookStatus(`Known limit reached (${limit}).`, "error"); return; }
+              }
+              set.add(sid);
+            }
+
+            setBlockSpellPickList(first.key, mode, Array.from(set));
+            saveState();
+            render();
+            renderSpellbook();
+          });
+
+          const q = document.createElement("button");
+          q.className = "qBtn";
+          q.type = "button";
+          q.textContent = "?";
+          q.addEventListener("click", () => {
+            const sp = getSpellDef(sid);
+            if (!sp) { openDialog(name, "Spell definition not found in spells.json.", ""); return; }
+            const details = formatSpellDetails(sp);
+            const split = splitHigherLevels(sp);
+            const fullText = [
+              split.base || "",
+              split.higher ? ("\nAt Higher Levels:\n" + split.higher) : ""
+            ].join("").trim();
+            openDialog(sp.name || sid, fullText || "(No text)", details);
+          });
+
+          el.spellbookList.appendChild(b);
+          el.spellbookList.appendChild(q);
+        }
+
+        // Right side: granted spells only (not selectable, but show info and allow cast by just existing in spells section)
+        for (const sid of grantedIds) {
+          if (!spellMatches(sid)) continue;
+          const s = getSpellDef(sid);
+          const name = s ? (s.name || sid) : sid;
+
+          const b = document.createElement("button");
+          b.className = "btn";
+          b.type = "button";
+          b.textContent = name;
+          b.addEventListener("click", async () => {
+            // granted spells are castable via spells section automatically.
+            // Here, show info quickly.
+            const sp = getSpellDef(sid);
+            if (!sp) { setSpellbookStatus("Missing spell definition.", "error"); return; }
+            const details = formatSpellDetails(sp);
+            const split = splitHigherLevels(sp);
+            const fullText = [
+              split.base || "",
+              split.higher ? ("\nAt Higher Levels:\n" + split.higher) : ""
+            ].join("").trim();
+            openDialog(sp.name || sid, fullText || "(No text)", details);
+          });
+
+          const q = document.createElement("button");
+          q.className = "qBtn";
+          q.type = "button";
+          q.textContent = "?";
+          q.addEventListener("click", () => {
+            const sp = getSpellDef(sid);
+            if (!sp) { openDialog(name, "Spell definition not found in spells.json.", ""); return; }
+            const details = formatSpellDetails(sp);
+            const split = splitHigherLevels(sp);
+            const fullText = [
+              split.base || "",
+              split.higher ? ("\nAt Higher Levels:\n" + split.higher) : ""
+            ].join("").trim();
+            openDialog(sp.name || sid, fullText || "(No text)", details);
+          });
+
+          el.spellbookRightList.appendChild(b);
+          el.spellbookRightList.appendChild(q);
+        }
+      }
+
+      async function openSpellbook() {
+        const ok = await loadSpellsIfNeeded();
+        if (!ok) return;
+        renderSpellbook();
+        if (typeof el.spellbookDialog.showModal === "function") el.spellbookDialog.showModal();
+        else alert("Spellbook dialog not supported in this browser.");
+      }
+
+      /* ---------- Abilities (packages) ---------- */
       function isLockedByRest(ability) {
         if (!ability || !ability.id) return false;
         if (!ability.usage || !ability.usage.type) return false;
@@ -1191,26 +2243,21 @@
         return true;
       }
 
-      async function handleAbilityUse(ability, sink = "main") {
-        const setSinkStatus = (msg, kind) => {
-          if (sink === "options") setOptStatus(msg, kind);
-          else setStatus(msg, kind);
-        };
-
+      async function handleAbilityUse(ability) {
         const actionType = ability.actionType || "action";
         if (actionType !== "passive") {
           if (!consumeEconomy(actionType)) {
-            setSinkStatus(`${actionTypeLabel(actionType)} already used this turn.`, "error");
-            saveState(state);
-            await render();
+            setStatus(`${actionTypeLabel(actionType)} already used this turn.`, "error");
+            saveState();
+            render();
             return;
           }
         }
 
         markUsedByRest(ability);
-        saveState(state);
-        await render();
-        setSinkStatus(`${ability.name} used.`, "ok");
+        saveState();
+        render();
+        setStatus(`${ability.name} used.`, "ok");
       }
 
       function abilityMetaLine(ability) {
@@ -1233,7 +2280,7 @@
         return parts.join(" | ");
       }
 
-      function renderAbilityCard(container, ability, opts) {
+      function renderAbilityCard(container, ability, { showUseButton }) {
         const base = getIconsBase();
 
         const card = document.createElement("div");
@@ -1279,13 +2326,13 @@
         const btns = document.createElement("div");
         btns.className = "abilityBtns";
 
-        if (opts && opts.showUseButton) {
+        if (showUseButton) {
           const useBtn = document.createElement("button");
           useBtn.className = "btn";
           useBtn.type = "button";
           useBtn.textContent = isLockedByRest(ability) ? "Locked" : "Use";
           useBtn.disabled = !canUseAbility(ability);
-          useBtn.addEventListener("click", () => handleAbilityUse(ability, "main"));
+          useBtn.addEventListener("click", () => handleAbilityUse(ability));
           btns.appendChild(useBtn);
         }
 
@@ -1310,196 +2357,293 @@
         el.abilitiesGrid.innerHTML = "";
         el.passivesGrid.innerHTML = "";
 
-        if (!SUPPORT || !Array.isArray(SUPPORT.abilities)) {
-          const e1 = document.createElement("div");
-          e1.className = "sub";
-          e1.textContent = "No abilities loaded.";
-          el.abilitiesGrid.appendChild(e1);
+        const abilities = Array.isArray(MERGED_SUPPORT.abilities) ? MERGED_SUPPORT.abilities : [];
+        const passives = Array.isArray(MERGED_SUPPORT.passiveAbilities) ? MERGED_SUPPORT.passiveAbilities : [];
 
-          const e2 = document.createElement("div");
-          e2.className = "sub";
-          e2.textContent = "No passive abilities loaded.";
-          el.passivesGrid.appendChild(e2);
-          return;
-        }
+        const unlockedA = abilities.filter(a => state.level >= (a.level || 1));
+        const unlockedP = passives.filter(a => state.level >= (a.level || 1));
 
-        const unlocked = SUPPORT.abilities.filter(a => state.level >= (a.level || 1));
-        const active = unlocked.filter(a => Array.isArray(a.cost) && a.cost.length > 0);
-        const passive = unlocked.filter(a => !Array.isArray(a.cost) || a.cost.length === 0);
-
-        if (active.length === 0) {
+        if (unlockedA.length === 0) {
           const e = document.createElement("div");
           e.className = "sub";
-          e.textContent = "No abilities available yet.";
+          e.textContent = "No abilities loaded.";
           el.abilitiesGrid.appendChild(e);
         } else {
-          for (const a of active) renderAbilityCard(el.abilitiesGrid, a, { showUseButton: true });
+          for (const a of unlockedA) renderAbilityCard(el.abilitiesGrid, a, { showUseButton: true });
         }
 
-        if (passive.length === 0) {
+        if (unlockedP.length === 0) {
           const e = document.createElement("div");
           e.className = "sub";
-          e.textContent = "No passive abilities available yet.";
+          e.textContent = "No passive abilities loaded.";
           el.passivesGrid.appendChild(e);
         } else {
-          for (const a of passive) renderAbilityCard(el.passivesGrid, a, { showUseButton: false });
+          for (const a of unlockedP) renderAbilityCard(el.passivesGrid, a, { showUseButton: false });
         }
       }
 
-      function openOptions(kind) {
-        el.optTitle.textContent = `Additional Options (${actionTypeLabel(kind)})`;
-        setOptStatus("");
+      /* ---------- Render basics ---------- */
+      function renderCoreStats() {
+        el.statAText.textContent = String(state.statA);
+        el.statBText.textContent = String(state.statB);
+        el.statCText.textContent = String(state.statC);
+      }
 
-        el.optGenericBtns.innerHTML = "";
-        el.optAbilityBtns.innerHTML = "";
-        el.optPassiveBtns.innerHTML = "";
+      function renderCombat() {
+        el.hpNowText.textContent = String(state.hpNow);
+        el.hpMaxText.textContent = String(state.hpMax);
+        el.hpTempText.textContent = String(state.hpTemp);
+        el.acText.textContent = String(state.acBase);
 
-        if (kind === "action") {
-          el.optSectionGeneric.style.display = "";
-          el.optGenericTitle.textContent = "Generic actions";
-          for (const g of GENERIC_ACTION_BUTTONS) {
-            const b = document.createElement("button");
-            b.className = "btn";
-            b.type = "button";
-            b.textContent = g.label;
-            b.disabled = state.actionUsed;
-            b.addEventListener("click", async () => {
-              if (!consumeEconomy("action")) { setOptStatus("Action already used this turn.", "error"); return; }
-              saveState(state);
-              await render();
-              setOptStatus(`Used action: ${g.text}`, "ok");
-            });
-            el.optGenericBtns.appendChild(b);
+        el.hpMaxInput.value = String(state.hpMax);
+        el.hpTempInput.value = String(state.hpTemp);
+        el.acInput.value = String(state.acBase);
+      }
+
+      function updateEconomyIcons() {
+        const base = getIconsBase();
+        const A = getActionIcons();
+        el.iconAction.src = base + (state.actionUsed ? A.actionUsed : A.action);
+        el.iconBonus.src = base + (state.bonusUsed ? A.bonusUsed : A.bonus);
+        el.iconReaction.src = base + (state.reactionUsed ? A.reactionUsed : A.reaction);
+      }
+
+      function renderEconomyButtons() {
+        const maxAttacks = getMaxAttacksPerTurn();
+        el.basicAttack.disabled = state.actionUsed || (state.attacksUsed >= maxAttacks);
+        el.actionOptions.disabled = state.actionUsed;
+        el.offhandAttack.disabled = state.bonusUsed;
+        el.bonusOptions.disabled = state.bonusUsed;
+        el.oppAttack.disabled = state.reactionUsed;
+        el.readiedAttack.disabled = state.reactionUsed;
+        el.reactionOptions.disabled = state.reactionUsed;
+      }
+
+      /* ---------- Class UI ---------- */
+      function getClassKeys() {
+        if (!SPELLCASTING || !SPELLCASTING.classes) return [];
+        const keys = Object.keys(SPELLCASTING.classes);
+        keys.sort((a,b)=>a.localeCompare(b));
+        return keys;
+      }
+
+      function renderClassBlocksUI() {
+        el.classBlocks.innerHTML = "";
+        const keys = getClassKeys();
+
+        function buildBlock(idx, title) {
+          const wrap = document.createElement("div");
+
+          const row = document.createElement("div");
+          row.className = "classBlockRow";
+
+          const col1 = document.createElement("div");
+          const lab1 = document.createElement("div");
+          lab1.className = "label";
+          lab1.textContent = `${title} Class`;
+          const sel = document.createElement("select");
+          sel.id = `classSel_${idx}`;
+          const opt0 = document.createElement("option");
+          opt0.value = "";
+          opt0.textContent = "-- Select --";
+          sel.appendChild(opt0);
+          for (const k of keys) {
+            const o = document.createElement("option");
+            o.value = k;
+            o.textContent = k;
+            sel.appendChild(o);
           }
-        } else if (kind === "bonus") {
-          el.optSectionGeneric.style.display = "";
-          el.optGenericTitle.textContent = "Bonus actions";
-          const b = document.createElement("button");
-          b.className = "btn";
-          b.type = "button";
-          b.textContent = "Offhand Attack";
-          b.disabled = state.bonusUsed;
-          b.addEventListener("click", async () => {
-            if (!consumeEconomy("bonus")) { setOptStatus("Bonus action already used this turn.", "error"); return; }
-            saveState(state);
+          sel.value = state.classBlocks[idx].key || "";
+          col1.appendChild(lab1);
+          col1.appendChild(sel);
+
+          const col2 = document.createElement("div");
+          const lab2 = document.createElement("div");
+          lab2.className = "label";
+          lab2.textContent = "Class Level";
+          const inpLvl = document.createElement("input");
+          inpLvl.type = "number";
+          inpLvl.min = "0";
+          inpLvl.step = "1";
+          inpLvl.id = `classLvl_${idx}`;
+          inpLvl.value = String(state.classBlocks[idx].classLevel || 0);
+          col2.appendChild(lab2);
+          col2.appendChild(inpLvl);
+
+          const col3 = document.createElement("div");
+          const cd = getClassDef(state.classBlocks[idx].key);
+          const abil = cd ? spellAbilityLabelForClass(cd) : "Mod";
+          const lab3 = document.createElement("div");
+          lab3.className = "label";
+          lab3.id = `classModLabel_${idx}`;
+          lab3.textContent = `${abil} Modifier`;
+          const inpMod = document.createElement("input");
+          inpMod.type = "number";
+          inpMod.step = "1";
+          inpMod.id = `classMod_${idx}`;
+          inpMod.value = String(state.classBlocks[idx].mod || 0);
+          col3.appendChild(lab3);
+          col3.appendChild(inpMod);
+
+          row.appendChild(col1);
+          row.appendChild(col2);
+          row.appendChild(col3);
+
+          wrap.appendChild(row);
+
+          // Packages for this class block
+          const pkgRow = document.createElement("div");
+          pkgRow.className = "controls";
+          pkgRow.style.marginTop = "10px";
+
+          const pkgInput = document.createElement("input");
+          pkgInput.type = "url";
+          pkgInput.placeholder = "Add package URL for this class (optional)";
+          pkgInput.style.flex = "1";
+          pkgInput.id = `classPkgUrl_${idx}`;
+
+          const pkgBtn = document.createElement("button");
+          pkgBtn.className = "btn";
+          pkgBtn.type = "button";
+          pkgBtn.textContent = "Add Class Package";
+          pkgBtn.addEventListener("click", async () => {
+            const u = String(pkgInput.value || "").trim();
+            if (!u) return;
+            state.classBlocks[idx].packages = Array.isArray(state.classBlocks[idx].packages) ? state.classBlocks[idx].packages : [];
+            state.classBlocks[idx].packages.push(u);
+            pkgInput.value = "";
+            saveState();
+            await loadPackages();
             await render();
-            setOptStatus("Offhand Attack used (bonus action).", "ok");
           });
-          el.optGenericBtns.appendChild(b);
-        } else {
-          el.optSectionGeneric.style.display = "";
-          el.optGenericTitle.textContent = "Reactions";
 
-          const b1 = document.createElement("button");
-          b1.className = "btn";
-          b1.type = "button";
-          b1.textContent = "Attack of Opportunity";
-          b1.disabled = state.reactionUsed;
-          b1.addEventListener("click", async () => {
-            if (!consumeEconomy("reaction")) { setOptStatus("Reaction already used this turn.", "error"); return; }
-            saveState(state);
+          const pkgClear = document.createElement("button");
+          pkgClear.className = "btn";
+          pkgClear.type = "button";
+          pkgClear.textContent = "Clear Class Packages";
+          pkgClear.addEventListener("click", async () => {
+            state.classBlocks[idx].packages = [];
+            saveState();
+            await loadPackages();
             await render();
-            setOptStatus("Attack of Opportunity used (reaction).", "ok");
           });
 
-          const b2 = document.createElement("button");
-          b2.className = "btn";
-          b2.type = "button";
-          b2.textContent = "Readied Attack";
-          b2.disabled = state.reactionUsed;
-          b2.addEventListener("click", async () => {
-            if (!consumeEconomy("reaction")) { setOptStatus("Reaction already used this turn.", "error"); return; }
-            saveState(state);
+          const pkgCount = document.createElement("div");
+          pkgCount.className = "sub";
+          pkgCount.textContent = `Class packages: ${(state.classBlocks[idx].packages || []).length}`;
+
+          pkgRow.appendChild(pkgInput);
+          pkgRow.appendChild(pkgBtn);
+          pkgRow.appendChild(pkgClear);
+          pkgRow.appendChild(pkgCount);
+
+          wrap.appendChild(pkgRow);
+
+          // Events
+          sel.addEventListener("change", async () => {
+            state.classBlocks[idx].key = String(sel.value || "");
+            const newCd = getClassDef(state.classBlocks[idx].key);
+            const lab = document.getElementById(`classModLabel_${idx}`);
+            if (lab) lab.textContent = `${newCd ? spellAbilityLabelForClass(newCd) : "Mod"} Modifier`;
+
+            // Reset spell picks for this block when class changes
+            if (idx === 0) {
+              delete state.preparedSpellsByBlock["main"];
+              delete state.knownSpellsByBlock["main"];
+            } else {
+              delete state.preparedSpellsByBlock["mc1"];
+              delete state.knownSpellsByBlock["mc1"];
+            }
+
+            saveState();
+            await loadPackages();
             await render();
-            setOptStatus("Readied Attack used (reaction).", "ok");
           });
 
-          const q = document.createElement("button");
-          q.className = "qBtn";
-          q.type = "button";
-          q.textContent = "?";
-          q.addEventListener("click", () => openDialog("Readied Attack", READIED_TEXT, ""));
+          inpLvl.addEventListener("input", async () => {
+            state.classBlocks[idx].classLevel = Math.max(0, nint(inpLvl.value, 0));
+            saveState();
+            await render();
+          });
 
-          el.optGenericBtns.appendChild(b1);
-          el.optGenericBtns.appendChild(b2);
-          el.optGenericBtns.appendChild(q);
+          inpMod.addEventListener("input", async () => {
+            state.classBlocks[idx].mod = nint(inpMod.value, 0);
+            saveState();
+            await render();
+          });
+
+          return wrap;
         }
 
-        const unlocked = (SUPPORT && Array.isArray(SUPPORT.abilities))
-          ? SUPPORT.abilities.filter(a => state.level >= (a.level || 1))
-          : [];
+        el.classBlocks.appendChild(buildBlock(0, "Primary"));
 
-        const active = unlocked.filter(a => Array.isArray(a.cost) && a.cost.length > 0);
-        const passive = unlocked.filter(a => !Array.isArray(a.cost) || a.cost.length === 0);
-
-        const forKindActive = active.filter(a => (a.actionType || "action") === kind);
-        const forKindPassive = passive.filter(a => (a.actionType || "passive") === kind);
-
-        if (forKindActive.length === 0) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "No abilities for this action type.";
-          el.optAbilityBtns.appendChild(sp);
-        } else {
-          for (const a of forKindActive) {
-            const b = document.createElement("button");
-            b.className = "btn";
-            b.type = "button";
-            b.textContent = a.name + (isLockedByRest(a) ? " (Locked)" : "");
-            b.disabled = !canUseAbility(a);
-            b.addEventListener("click", async () => {
-              if (!canUseAbility(a)) { setOptStatus(`${a.name}: not available right now.`, "error"); await render(); return; }
-              await handleAbilityUse(a, "options");
-            });
-
-            const q = document.createElement("button");
-            q.className = "qBtn";
-            q.type = "button";
-            q.textContent = "?";
-            q.addEventListener("click", () => openDialog(a.name, a.desc || "", abilityMetaLine(a)));
-
-            el.optAbilityBtns.appendChild(b);
-            el.optAbilityBtns.appendChild(q);
-          }
+        if (state.multiclass) {
+          el.classBlocks.appendChild(buildBlock(1, "Secondary"));
         }
+      }
 
-        if (forKindPassive.length === 0) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "No passive abilities for this action type.";
-          el.optPassiveBtns.appendChild(sp);
-        } else {
-          for (const p of forKindPassive) {
-            const canSpend =
-              (p.actionType === "action" && !state.actionUsed) ||
-              (p.actionType === "bonus" && !state.bonusUsed) ||
-              (p.actionType === "reaction" && !state.reactionUsed);
+      /* ---------- Manifest and packages ---------- */
+      async function loadManifest() {
+        const url = String(el.buildManifestUrl.value || "").trim();
+        if (!url) { setStatus("Enter a manifest URL.", "error"); return; }
 
-            const b = document.createElement("button");
-            b.className = "btn";
-            b.type = "button";
-            b.textContent = p.name;
-            b.disabled = !canSpend;
-            b.addEventListener("click", async () => {
-              if (!consumeEconomy(p.actionType || "action")) { setOptStatus(`${actionTypeLabel(p.actionType)} already used this turn.`, "error"); return; }
-              saveState(state);
-              await render();
-              setOptStatus(`Used ${actionTypeLabel(p.actionType)} for: ${p.name}`, "ok");
-            });
+        try {
+          const m = await fetchJson(url);
 
-            const q = document.createElement("button");
-            q.className = "qBtn";
-            q.type = "button";
-            q.textContent = "?";
-            q.addEventListener("click", () => openDialog(p.name, p.desc || "", abilityMetaLine(p)));
+          if (m && typeof m === "object") {
+            if (m.characterLevel != null) state.level = clamp(nint(m.characterLevel, state.level), 1, 20);
 
-            el.optPassiveBtns.appendChild(b);
-            el.optPassiveBtns.appendChild(q);
+            if (m.multiclass != null) state.multiclass = !!m.multiclass;
+
+            if (Array.isArray(m.classes)) {
+              // classes: [{ key, level, mod, packages }]
+              for (let i = 0; i < 2; i++) {
+                const c = m.classes[i];
+                if (!c) continue;
+                if (typeof c.key === "string") state.classBlocks[i].key = c.key;
+                if (c.level != null) state.classBlocks[i].classLevel = Math.max(0, nint(c.level, state.classBlocks[i].classLevel));
+                if (c.mod !=null) state.classBlocks[i].mod = nint(c.mod, state.classBlocks[i].mod);
+                if (Array.isArray(c.packages)) state.classBlocks[i].packages = c.packages.filter(x => typeof x === "string");
+              }
+            }
+
+            if (Array.isArray(m.packages)) {
+              state.packageUrls = m.packages.filter(x => typeof x === "string");
+            }
+
+            saveState();
+            await loadPackages();
+            await render();
+            setStatus("Manifest loaded.", "ok");
+          } else {
+            setStatus("Manifest JSON invalid.", "error");
           }
+        } catch (e) {
+          setStatus("Failed to load manifest URL.", "error");
         }
+      }
 
-        if (typeof el.optionsDialog.showModal === "function") el.optionsDialog.showModal();
-        else alert("Options dialog not supported in this browser.");
+      function addGlobalPackage() {
+        const u = prompt("Paste a package JSON URL to add (global):");
+        if (!u) return;
+        state.packageUrls.push(String(u).trim());
+        saveState();
+        loadPackages().then(render);
+      }
+
+      function clearGlobalPackages() {
+        state.packageUrls = [];
+        saveState();
+        loadPackages().then(render);
+      }
+
+      function updatePackageSummary() {
+        const globalCount = state.packageUrls.length;
+        const c0 = (state.classBlocks[0].packages || []).length;
+        const c1 = (state.classBlocks[1].packages || []).length;
+        el.packageSummary.textContent = state.multiclass
+          ? `Packages: global ${globalCount}, class1 ${c0}, class2 ${c1}`
+          : `Packages: global ${globalCount}, class1 ${c0}`;
       }
 
       /* ---------- Calculator ---------- */
@@ -1555,15 +2699,15 @@
           state.calcExpr = "";
           state.calcResult = "0";
           setCalcStatus("");
-          saveState(state);
+          saveState();
           renderCalculator();
           return;
         }
         if (key === "⌫") {
           state.calcExpr = (state.calcExpr || "").slice(0, -1);
-          saveState(state);
+          saveState();
           setCalcResultFromExpr();
-          saveState(state);
+          saveState();
           return;
         }
         if (key === "=") {
@@ -1571,22 +2715,22 @@
           if (!r.ok) {
             state.calcResult = "ERR";
             setCalcStatus(r.error, "error");
-            saveState(state);
+            saveState();
             renderCalculator();
             return;
           }
           state.calcExpr = String(r.value);
           state.calcResult = String(r.value);
           setCalcStatus("");
-          saveState(state);
+          saveState();
           renderCalculator();
           return;
         }
 
         state.calcExpr = sanitizeExpr((state.calcExpr || "") + key);
-        saveState(state);
+        saveState();
         setCalcResultFromExpr();
-        saveState(state);
+        saveState();
       }
 
       function getCalcNumericResult() {
@@ -1595,780 +2739,38 @@
         return { ok: true, value: r.value };
       }
 
-      /* ---------- Support doc loading ---------- */
-      async function loadSupportDoc() {
-        try {
-          const res = await fetch(SUPPORT_DOC_URL, { cache: "no-store" });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          SUPPORT = await res.json();
-          return true;
-        } catch {
-          SUPPORT = null;
-          setStatus(`Failed to load support doc: ${SUPPORT_DOC_URL}\nTip: must be served over http(s).`, "error");
-          return false;
-        }
-      }
-
-      async function loadSpellcasting() {
-        try {
-          const res = await fetch(SPELLCASTING_URL, { cache: "no-store" });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          SPELLCASTING = await res.json();
-          return true;
-        } catch {
-          SPELLCASTING = null;
-          setSpellStatus(`Failed to load spellcasting: ${SPELLCASTING_URL}`, "error");
-          return false;
-        }
-      }
-
-      async function loadSpellsIfNeeded() {
-        if (SPELLS) return true;
-        try {
-          const res = await fetch(SPELLS_URL, { cache: "no-store" });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          SPELLS = await res.json();
-          return true;
-        } catch {
-          SPELLS = null;
-          setSpellbookStatus(`Failed to load spells: ${SPELLS_URL}`, "error");
-          return false;
-        }
-      }
-
-      function rebuildClassSelect() {
-        el.classSelect.innerHTML = "";
-        const optNone = document.createElement("option");
-        optNone.value = "";
-        optNone.textContent = "None";
-        el.classSelect.appendChild(optNone);
-
-        if (!SPELLCASTING || !SPELLCASTING.classes) {
-          const o = document.createElement("option");
-          o.value = "";
-          o.textContent = "Spellcasting not loaded";
-          el.classSelect.appendChild(o);
-          return;
-        }
-
-        const keys = Object.keys(SPELLCASTING.classes);
-        keys.sort((a,b)=>a.localeCompare(b));
-
-        for (const k of keys) {
-          const c = SPELLCASTING.classes[k];
-          const o = document.createElement("option");
-          o.value = k;
-          o.textContent = k;
-          el.classSelect.appendChild(o);
-        }
-
-        el.classSelect.value = state.classKey || "";
-      }
-
-      function getSelectedClassDef() {
-        if (!SPELLCASTING || !SPELLCASTING.classes) return null;
-        const k = state.classKey || "";
-        return (k && SPELLCASTING.classes[k]) ? SPELLCASTING.classes[k] : null;
-      }
-
-      function getProgressionDef(progKey) {
-        if (!SPELLCASTING || !SPELLCASTING.progressions) return null;
-        return (progKey && SPELLCASTING.progressions[progKey]) ? SPELLCASTING.progressions[progKey] : null;
-      }
-
-      function isPreparedCaster(classDef) {
-        return !!(classDef && classDef.prepared && classDef.prepared.type === "prepared");
-      }
-
-      function inferAbilityFromPreparedRule(classDef) {
-        if (!classDef || !classDef.prepared || !classDef.prepared.formula) return "";
-        const f = String(classDef.prepared.formula || "").toUpperCase();
-        if (f.includes("INT")) return "INT";
-        if (f.includes("WIS")) return "WIS";
-        if (f.includes("CHA")) return "CHA";
-        return "";
-      }
-
-      function renderSpellModInput() {
-        const classDef = getSelectedClassDef();
-        if (!classDef) {
-          el.spellModRow.style.display = "none";
-          return;
-        }
-
-        const ab = inferAbilityFromPreparedRule(classDef) || "SPELL";
-        el.spellModRow.style.display = "";
-        el.spellModLabel.textContent = `Spellcasting Ability Mod (${ab})`;
-        el.spellModInput.value = String(state.spellMod);
-      }
-
-      function computePreparedLimit(classDef) {
-        if (!isPreparedCaster(classDef)) return 0;
-
-        const mod = nint(state.spellMod, 0);
-        const lvl = clamp(nint(state.level, 1), 1, 20);
-
-        const f = String(classDef.prepared.formula || "").toUpperCase();
-        let val = 0;
-
-        if (f.includes("FLOOR") || f.includes("LEVEL/2")) {
-          val = mod + Math.floor(lvl / 2);
-        } else {
-          val = mod + lvl;
-        }
-
-        const min = Number.isFinite(Number(classDef.prepared.min)) ? Number(classDef.prepared.min) : 1;
-        return Math.max(min, Math.trunc(val));
-      }
-
-      function getSlotsForCurrent() {
-        const classDef = getSelectedClassDef();
-        if (!classDef) return { type: "none" };
-
-        const prog = getProgressionDef(classDef.progression);
-        if (!prog) return { type: "none" };
-
-        const lvl = clamp(nint(state.level, 1), 1, 20);
-
-        if (prog.pactMagicTable) {
-          const row = prog.pactMagicTable[String(lvl)] || prog.pactMagicTable[lvl];
-          const recharge = "shortRest";
-          if (!row) return { type: "pact", slots: 0, slotLevel: 1, recharge };
-          return {
-            type: "pact",
-            slots: Math.max(0, nint(row.slots, 0)),
-            slotLevel: Math.max(1, nint(row.slotLevel, 1)),
-            recharge
-          };
-        }
-
-        const tbl = prog.slotTable;
-        const arr = (tbl && (tbl[String(lvl)] || tbl[lvl])) ? (tbl[String(lvl)] || tbl[lvl]) : null;
-        if (!arr || !Array.isArray(arr)) return { type: "standard", levels: [] };
-
-        return { type: "standard", levels: arr.map(x => Math.max(0, nint(x, 0))) };
-      }
-
-      function getUsedSlots(levelKey) {
-        const v = state.spellSlotsUsed[levelKey];
-        return Math.max(0, nint(v, 0));
-      }
-
-      function setUsedSlots(levelKey, used) {
-        state.spellSlotsUsed[levelKey] = Math.max(0, nint(used, 0));
-      }
-
-      function resetAllSlots() {
-        state.spellSlotsUsed = {};
-        saveState(state);
-      }
-
-      function renderSpellSlots() {
-        const classDef = getSelectedClassDef();
-
-        el.spellSlotsWrap.innerHTML = "";
-        el.spellMetaText.textContent = "";
-        el.preparedLimitText.textContent = "";
-        el.spellsPrepareBtn.style.display = "none";
-
-        if (!SPELLCASTING) {
-          el.spellMetaText.textContent = "Spellcasting rules not loaded.";
-          return;
-        }
-
-        if (!classDef) {
-          el.spellMetaText.textContent = "Select a class to show spellcasting.";
-          return;
-        }
-
-        const slots = getSlotsForCurrent();
-
-        if (slots.type === "pact") {
-          el.spellMetaText.textContent = `Pact Magic, Slot Level ${slots.slotLevel}, Recharge: short rest`;
-
-          const row = document.createElement("div");
-          row.className = "slotRow";
-
-          const left = document.createElement("div");
-          left.className = "slotLabel";
-          left.textContent = `Pact Slots (L${slots.slotLevel})`;
-
-          const right = document.createElement("div");
-          right.className = "slotBubbles";
-
-          const used = clamp(getUsedSlots("pact"), 0, slots.slots);
-          if (used !== getUsedSlots("pact")) setUsedSlots("pact", used);
-
-          for (let i = 0; i < slots.slots; i++) {
-            const b = document.createElement("button");
-            b.type = "button";
-            b.className = "slotBubble" + (i < used ? " used" : "");
-            b.textContent = "★";
-            b.addEventListener("click", async () => {
-              const nowUsed = getUsedSlots("pact");
-              const nextUsed = (i < nowUsed) ? i : (i + 1);
-              setUsedSlots("pact", clamp(nextUsed, 0, slots.slots));
-              saveState(state);
-              await render();
-            });
-            right.appendChild(b);
-          }
-
-          row.appendChild(left);
-          row.appendChild(right);
-          el.spellSlotsWrap.appendChild(row);
-        } else {
-          el.spellMetaText.textContent = `Progression: ${classDef.progression}`;
-
-          const maxByLevel = slots.levels;
-          for (let idx = 0; idx < maxByLevel.length; idx++) {
-            const max = maxByLevel[idx];
-            const spellLevel = idx + 1;
-            if (max <= 0) continue;
-
-            const levelKey = String(spellLevel);
-            const used = clamp(getUsedSlots(levelKey), 0, max);
-            if (used !== getUsedSlots(levelKey)) setUsedSlots(levelKey, used);
-
-            const row = document.createElement("div");
-            row.className = "slotRow";
-
-            const left = document.createElement("div");
-            left.className = "slotLabel";
-            left.textContent = `Level ${spellLevel}`;
-
-            const right = document.createElement("div");
-            right.className = "slotBubbles";
-
-            for (let i = 0; i < max; i++) {
-              const b = document.createElement("button");
-              b.type = "button";
-              b.className = "slotBubble" + (i < used ? " used" : "");
-              b.textContent = String(spellLevel);
-              b.addEventListener("click", async () => {
-                const nowUsed = getUsedSlots(levelKey);
-                const nextUsed = (i < nowUsed) ? i : (i + 1);
-                setUsedSlots(levelKey, clamp(nextUsed, 0, max));
-                saveState(state);
-                await render();
-              });
-              right.appendChild(b);
-            }
-
-            row.appendChild(left);
-            row.appendChild(right);
-            el.spellSlotsWrap.appendChild(row);
-          }
-        }
-
-        if (isPreparedCaster(classDef)) {
-          const limit = computePreparedLimit(classDef);
-          el.preparedLimitText.textContent = `Prepared limit: ${limit}`;
-          el.spellsPrepareBtn.style.display = "";
-        }
-      }
-
-      function countPrepared() {
-        let n = 0;
-        for (const k in state.preparedSpells) if (state.preparedSpells[k]) n++;
-        return n;
-      }
-
-      function getSpellDef(spellId) {
-        if (!SPELLS) return null;
-        if (SPELLS.spells && Array.isArray(SPELLS.spells)) {
-          // support array schema
-          for (const s of SPELLS.spells) if (s.id === spellId) return s;
-        }
-        if (SPELLS.spells && SPELLS.spells[spellId]) return SPELLS.spells[spellId];
-        return null;
-      }
-
-      function splitHigherLevels(desc) {
-        const d = String(desc || "");
-        const idx = d.toLowerCase().indexOf("at higher levels");
-        if (idx === -1) return { base: d.trim(), higher: "" };
-
-        const base = d.slice(0, idx).trim();
-        let higher = d.slice(idx).trim();
-        higher = higher.replace(/^at higher levels\s*[:.\-]?\s*/i, "");
-        return { base, higher };
-      }
-
-      function inferEconomyFromCastingTime(castingTime) {
-        const t = String(castingTime || "").toLowerCase();
-        if (t.includes("reaction")) return "reaction";
-        if (t.includes("bonus")) return "bonus";
-        return "action";
-      }
-
-      function getClassSpellList(classDef) {
-        // spellcasting_rebuilt.json schema: spellListByLevel: { "0": [{id,name}], "1": ... }
-        const out = [];
-        if (!classDef || !classDef.spellListByLevel) return out;
-
-        const keys = Object.keys(classDef.spellListByLevel).map(k => Number(k)).filter(n => Number.isFinite(n));
-        keys.sort((a,b)=>a-b);
-
-        for (const k of keys) {
-          const arr = classDef.spellListByLevel[String(k)];
-          if (!Array.isArray(arr)) continue;
-          for (const item of arr) {
-            if (item && item.id) out.push(item.id);
-          }
-        }
-
-        const seen = new Set();
-        const ordered = [];
-        for (const id of out) {
-          if (!id || seen.has(id)) continue;
-          seen.add(id);
-          ordered.push(id);
-        }
-        return ordered;
-      }
-
-      function getAlwaysAvailableIds(classDef) {
-        // For this schema we treat cantrips as always available (level 0 list)
-        if (!classDef || !classDef.spellListByLevel) return [];
-        const arr = classDef.spellListByLevel["0"];
-        if (!Array.isArray(arr)) return [];
-        return arr.map(x => x.id).filter(Boolean);
-      }
-
-      async function openSpellbook(mode) {
-        const classDef = getSelectedClassDef();
-        if (!classDef) {
-          setStatus("Select a class first to open the spellbook.", "error");
-          return;
-        }
-
-        const ok = await loadSpellsIfNeeded();
-        if (!ok) return;
-
-        setSpellbookStatus("");
-        el.spellbookTitle.textContent = `Spellbook (${state.classKey})`;
-
-        await renderSpellbookList(mode || "view");
-
-        if (typeof el.spellbookDialog.showModal === "function") el.spellbookDialog.showModal();
-        else alert("Spellbook dialog not supported in this browser.");
-      }
-
-      async function renderSpellbookList(mode) {
-        const classDef = getSelectedClassDef();
-        if (!classDef || !SPELLS) return;
-
-        const q = String(el.spellSearch.value || "").trim().toLowerCase();
-        const levelFilter = String(el.spellLevelFilter.value || "all");
-
-        const isPrep = isPreparedCaster(classDef);
-        const limit = computePreparedLimit(classDef);
-        const preparedNow = countPrepared();
-
-        el.spellbookMainTitle.textContent = isPrep && mode === "prepare"
-          ? `Prepare Spells (${preparedNow}/${limit})`
-          : "Spells";
-
-        el.spellbookList.innerHTML = "";
-        el.spellbookAlwaysList.innerHTML = "";
-
-        const mainIds = getClassSpellList(classDef);
-        const alwaysIds = getAlwaysAvailableIds(classDef);
-
-        function passFilter(id) {
-          const d = getSpellDef(id);
-          if (!d) return false;
-
-          if (q) {
-            const nm = String(d.name || id).toLowerCase();
-            if (!nm.includes(q)) return false;
-          }
-
-          if (levelFilter !== "all") {
-            const want = Number(levelFilter);
-            if (Number.isFinite(want)) {
-              const lv = Number.isFinite(Number(d.level)) ? Number(d.level) : -999;
-              if (lv !== want) return false;
-            }
-          }
-
-          return true;
-        }
-
-        function renderSpellButton(container, id, opts) {
-          const d = getSpellDef(id);
-          if (!d) return;
-
-          const b = document.createElement("button");
-          b.className = "btn";
-          b.type = "button";
-
-          const lv = Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-          const prefix = (lv === 0) ? "[C] " : `[${lv}] `;
-          const preparedMark = (opts && opts.showPrepared && state.preparedSpells[id]) ? " (Prepared)" : "";
-
-          b.textContent = prefix + (d.name || id) + preparedMark;
-
-          b.addEventListener("click", async () => {
-            if (opts && opts.togglePrepare) {
-              if (!isPrep) return;
-
-              const now = !!state.preparedSpells[id];
-              if (!now) {
-                // Cantrips never count toward prepared limit
-                if (lv !== 0) {
-                  const cur = countPrepared();
-                  if (cur >= limit) {
-                    setSpellbookStatus(`Prepared limit reached (${limit}). Unprepare something first.`, "error");
-                    return;
-                  }
-                }
-              }
-
-              // If cantrip, we allow toggle but it won't count anyway because countPrepared ignores cantrips later
-              state.preparedSpells[id] = !now;
-              saveState(state);
-              await render();
-              await renderSpellbookList(mode);
-              return;
-            }
-
-            const meta = [
-              (lv === 0 ? "Cantrip" : `Level ${lv}`),
-              d.school ? d.school : "",
-              d.ritual ? "Ritual" : "",
-              d.concentration ? "Concentration" : "",
-              d.castingTime ? `Casting: ${d.castingTime}` : ""
-            ].filter(Boolean).join(" | ");
-
-            const split = splitHigherLevels(d.description || d.text || "");
-            const body = split.higher ? (split.base + "\n\nAt Higher Levels: " + split.higher) : split.base;
-
-            openDialog(d.name || id, body || "(No rules text found.)", meta);
-          });
-
-          container.appendChild(b);
-
-          const qbtn = document.createElement("button");
-          qbtn.className = "qBtn";
-          qbtn.type = "button";
-          qbtn.textContent = "?";
-          qbtn.addEventListener("click", () => {
-            const lv2 = Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-            const meta2 = [
-              (lv2 === 0 ? "Cantrip" : `Level ${lv2}`),
-              d.school ? d.school : "",
-              d.ritual ? "Ritual" : "",
-              d.concentration ? "Concentration" : "",
-              d.castingTime ? `Casting: ${d.castingTime}` : ""
-            ].filter(Boolean).join(" | ");
-
-            const split = splitHigherLevels(d.description || d.text || "");
-            const body = split.higher ? (split.base + "\n\nAt Higher Levels: " + split.higher) : split.base;
-
-            openDialog(d.name || id, body || "(No rules text found.)", meta2);
-          });
-          container.appendChild(qbtn);
-        }
-
-        // Main list
-        for (const id of mainIds) {
-          if (!passFilter(id)) continue;
-          renderSpellButton(el.spellbookList, id, { togglePrepare: (mode === "prepare"), showPrepared: true });
-        }
-
-        // Cantrips
-        for (const id of alwaysIds) {
-          if (!passFilter(id)) continue;
-          renderSpellButton(el.spellbookAlwaysList, id, { togglePrepare: false, showPrepared: false });
-        }
-
-        if (mode === "prepare" && isPrep) {
-          setSpellbookStatus(`Preparing: ${countPrepared()}/${limit}`, "ok");
-        } else {
-          setSpellbookStatus("");
-        }
-      }
-
-      function getAvailableSlotLevelsForSpell(spellLevel) {
-        const classDef = getSelectedClassDef();
-        const slots = getSlotsForCurrent();
-        const out = [];
-
-        if (slots.type === "pact") {
-          // Warlock can cast spells using pact slots, must be <= slotLevel (and spell must be <= that)
-          if (spellLevel === 0) return ["cantrip"];
-          if (spellLevel <= slots.slotLevel && slots.slots > getUsedSlots("pact")) {
-            out.push(String(slots.slotLevel));
-          }
-          return out;
-        }
-
-        if (slots.type === "standard") {
-          if (spellLevel === 0) return ["cantrip"];
-          for (let i = spellLevel; i <= slots.levels.length; i++) {
-            const max = slots.levels[i-1] || 0;
-            if (max <= 0) continue;
-            const used = getUsedSlots(String(i));
-            if (used < max) out.push(String(i));
-          }
-          return out;
-        }
-
-        return out;
-      }
-
-      function countPreparedIgnoringCantrips() {
-        const classDef = getSelectedClassDef();
-        if (!classDef) return 0;
-        let n = 0;
-        for (const k in state.preparedSpells) {
-          if (!state.preparedSpells[k]) continue;
-          const d = SPELLS ? getSpellDef(k) : null;
-          const lv = d && Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-          if (lv === 0) continue;
-          n++;
-        }
-        return n;
-      }
-
-      function renderPreparedSpellsArea() {
-        el.preparedSpellsGrid.innerHTML = "";
-
-        const classDef = getSelectedClassDef();
-        if (!classDef) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "Select a class to use spellcasting.";
-          el.preparedSpellsGrid.appendChild(sp);
-          return;
-        }
-
-        const isPrep = isPreparedCaster(classDef);
-
-        if (!isPrep) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "This class does not prepare spells. Use the Spellbook to reference spells, and use spell slots above.";
-          el.preparedSpellsGrid.appendChild(sp);
-          return;
-        }
-
-        if (!SPELLS) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "Load spells by opening the Spellbook once.";
-          el.preparedSpellsGrid.appendChild(sp);
-          return;
-        }
-
-        const preparedIds = Object.keys(state.preparedSpells).filter(id => state.preparedSpells[id]);
-        if (preparedIds.length === 0) {
-          const sp = document.createElement("div");
-          sp.className = "sub";
-          sp.textContent = "No prepared spells yet. Use “Prepare Spells”.";
-          el.preparedSpellsGrid.appendChild(sp);
-          return;
-        }
-
-        // sort by spell level then name
-        preparedIds.sort((a,b)=>{
-          const da = getSpellDef(a), db = getSpellDef(b);
-          const la = da && Number.isFinite(Number(da.level)) ? Number(da.level) : 0;
-          const lb = db && Number.isFinite(Number(db.level)) ? Number(db.level) : 0;
-          if (la !== lb) return la - lb;
-          return String(da?.name || a).localeCompare(String(db?.name || b));
-        });
-
-        for (const id of preparedIds) {
-          const d = getSpellDef(id);
-          if (!d) continue;
-
-          const lv = Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-          if (lv === 0) continue; // show cantrips in spellbook-only section
-
-          const card = document.createElement("div");
-          card.className = "spellCard";
-
-          const left = document.createElement("div");
-          const nm = document.createElement("div");
-          nm.className = "spellName";
-          nm.textContent = d.name || id;
-
-          const meta = document.createElement("div");
-          meta.className = "spellMeta";
-          meta.textContent = `${lv === 0 ? "Cantrip" : "Level " + lv} | ${d.school || ""}`.trim();
-
-          left.appendChild(nm);
-          left.appendChild(meta);
-
-          const right = document.createElement("div");
-          right.className = "spellBtns";
-
-          const castBtn = document.createElement("button");
-          castBtn.className = "btn";
-          castBtn.type = "button";
-          castBtn.textContent = "Cast";
-          castBtn.addEventListener("click", () => openCastDialog(id));
-          right.appendChild(castBtn);
-
-          const infoBtn = document.createElement("button");
-          infoBtn.className = "qBtn";
-          infoBtn.type = "button";
-          infoBtn.textContent = "?";
-          infoBtn.addEventListener("click", () => {
-            const split = splitHigherLevels(d.description || d.text || "");
-            const body = split.higher ? (split.base + "\n\nAt Higher Levels: " + split.higher) : split.base;
-            openDialog(d.name || id, body || "(No rules text found.)", `${lv === 0 ? "Cantrip" : "Level " + lv} | ${d.school || ""}`);
-          });
-          right.appendChild(infoBtn);
-
-          card.appendChild(left);
-          card.appendChild(right);
-
-          el.preparedSpellsGrid.appendChild(card);
-        }
-      }
-
-      async function openCastDialog(spellId) {
-        const ok = await loadSpellsIfNeeded();
-        if (!ok) return;
-
-        const d = getSpellDef(spellId);
-        if (!d) {
-          setSpellStatus("Spell not found in spells.json", "error");
-          return;
-        }
-
-        currentCastSpellId = spellId;
-        setCastStatus("");
-
-        el.castTitle.textContent = `Cast: ${d.name || spellId}`;
-
-        const lv = Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-        const avail = getAvailableSlotLevelsForSpell(lv);
-
-        el.castSlotLevel.innerHTML = "";
-        if (lv === 0) {
-          const o = document.createElement("option");
-          o.value = "cantrip";
-          o.textContent = "Cantrip (no slot)";
-          el.castSlotLevel.appendChild(o);
-        } else {
-          if (avail.length === 0) {
-            const o = document.createElement("option");
-            o.value = "";
-            o.textContent = "No slots available";
-            el.castSlotLevel.appendChild(o);
-          } else {
-            for (const s of avail) {
-              const o = document.createElement("option");
-              o.value = s;
-              o.textContent = `Level ${s}`;
-              el.castSlotLevel.appendChild(o);
-            }
-          }
-        }
-
-        const split = splitHigherLevels(d.description || d.text || "");
-        el.castBaseText.textContent = split.base || "";
-        el.castHigherText.textContent = split.higher || "(No higher-level effect listed.)";
-
-        // Default economy from casting time
-        const econ = inferEconomyFromCastingTime(d.castingTime || d.casting_time || "");
-        el.castEconomy.value = econ;
-
-        if (typeof el.castDialog.showModal === "function") el.castDialog.showModal();
-        else alert("Cast dialog not supported in this browser.");
-      }
-
-      async function confirmCast() {
-        if (!currentCastSpellId) return;
-
-        const ok = await loadSpellsIfNeeded();
-        if (!ok) return;
-
-        const d = getSpellDef(currentCastSpellId);
-        if (!d) return;
-
-        const lv = Number.isFinite(Number(d.level)) ? Number(d.level) : 0;
-        const chosen = String(el.castSlotLevel.value || "");
-        const econ = String(el.castEconomy.value || "action");
-
-        // Action economy spend
-        if (econ !== "none") {
-          const spent = consumeEconomy(econ);
-          if (!spent) {
-            setCastStatus(`${actionTypeLabel(econ)} already used this turn.`, "error");
-            await render();
-            return;
-          }
-        }
-
-        // Slot spend
-        if (lv > 0) {
-          if (!chosen) {
-            setCastStatus("No slot available to cast this spell.", "error");
-            await render();
-            return;
-          }
-
-          const classDef = getSelectedClassDef();
-          const slots = getSlotsForCurrent();
-
-          if (slots.type === "pact") {
-            const max = slots.slots;
-            const used = clamp(getUsedSlots("pact"), 0, max);
-            if (used >= max) {
-              setCastStatus("No pact slots remaining.", "error");
-              await render();
-              return;
-            }
-            setUsedSlots("pact", used + 1);
-          } else {
-            const levelKey = chosen;
-            const idx = Number(levelKey) - 1;
-            const max = (slots.type === "standard" && idx >= 0 && idx < slots.levels.length) ? slots.levels[idx] : 0;
-            const used = clamp(getUsedSlots(levelKey), 0, max);
-            if (used >= max) {
-              setCastStatus(`No level ${levelKey} slots remaining.`, "error");
-              await render();
-              return;
-            }
-            setUsedSlots(levelKey, used + 1);
-          }
-        }
-
-        saveState(state);
-        await render();
-        setCastStatus("Spell cast. Slots and action economy updated.", "ok");
-      }
-
       /* ---------- Main render ---------- */
       async function render() {
         normalize();
+        updatePackageSummary();
+        renderResourcesFromPackages();
+        renderClassBlocksUI();
         renderCoreStats();
         renderCombat();
         updateEconomyIcons();
         renderEconomyButtons();
+        renderSpellSlots();
+        renderSpellsSection();
         renderAbilities();
         renderCalculator();
         setCalcResultFromExpr();
-
-        rebuildClassSelect();
-        renderSpellModInput();
-        renderSpellSlots();
-        renderPreparedSpellsArea();
       }
 
-      function init() {
+      function initDom() {
         el.levelInput = document.getElementById("levelInput");
-        el.classSelect = document.getElementById("classSelect");
+        el.multiclassToggle = document.getElementById("multiclassToggle");
+        el.classBlocks = document.getElementById("classBlocks");
+        el.classWarning = document.getElementById("classWarning");
 
-        el.spellModRow = document.getElementById("spellModRow");
-        el.spellModLabel = document.getElementById("spellModLabel");
-        el.spellModInput = document.getElementById("spellModInput");
+        el.buildManifestUrl = document.getElementById("buildManifestUrl");
+        el.loadManifest = document.getElementById("loadManifest");
+        el.addPackage = document.getElementById("addPackage");
+        el.clearPackages = document.getElementById("clearPackages");
+        el.packageSummary = document.getElementById("packageSummary");
+
+        el.statALabel = document.getElementById("statALabel");
+        el.statBLabel = document.getElementById("statBLabel");
+        el.statCLabel = document.getElementById("statCLabel");
 
         el.statAText = document.getElementById("statAText");
         el.statBText = document.getElementById("statBText");
@@ -2380,13 +2782,11 @@
         el.openCalcTop = document.getElementById("openCalcTop");
         el.openSpellbookTop = document.getElementById("openSpellbookTop");
 
-        el.spellSlotsWrap = document.getElementById("spellSlotsWrap");
         el.spellMetaText = document.getElementById("spellMetaText");
-        el.spellStatus = document.getElementById("spellStatus");
+        el.spellSlotsWrap = document.getElementById("spellSlotsWrap");
         el.spellsResetSlots = document.getElementById("spellsResetSlots");
-        el.spellsPrepareBtn = document.getElementById("spellsPrepareBtn");
-        el.preparedLimitText = document.getElementById("preparedLimitText");
-        el.preparedSpellsGrid = document.getElementById("preparedSpellsGrid");
+        el.openSpellbookSlots = document.getElementById("openSpellbookSlots");
+        el.spellStatus = document.getElementById("spellStatus");
 
         el.iconAction = document.getElementById("iconAction");
         el.iconBonus = document.getElementById("iconBonus");
@@ -2414,6 +2814,13 @@
         el.hpZeroTemp = document.getElementById("hpZeroTemp");
         el.openCalc = document.getElementById("openCalc");
 
+        el.spellsSectionTitle = document.getElementById("spellsSectionTitle");
+        el.spellsSectionSub = document.getElementById("spellsSectionSub");
+        el.spellsManageBtn = document.getElementById("spellsManageBtn");
+        el.spellsLimitText = document.getElementById("spellsLimitText");
+        el.spellsGrid = document.getElementById("spellsGrid");
+        el.spellsStatus = document.getElementById("spellsStatus");
+
         el.abilitiesGrid = document.getElementById("abilitiesGrid");
         el.passivesGrid = document.getElementById("passivesGrid");
 
@@ -2424,16 +2831,29 @@
         el.dlgClose = document.getElementById("dlgClose");
         el.dlgX = document.getElementById("dlgX");
 
-        el.optionsDialog = document.getElementById("optionsDialog");
-        el.optTitle = document.getElementById("optTitle");
-        el.optGenericBtns = document.getElementById("optGenericBtns");
-        el.optAbilityBtns = document.getElementById("optAbilityBtns");
-        el.optPassiveBtns = document.getElementById("optPassiveBtns");
-        el.optStatus = document.getElementById("optStatus");
-        el.optClose = document.getElementById("optClose");
-        el.optX = document.getElementById("optX");
-        el.optSectionGeneric = document.getElementById("optSectionGeneric");
-        el.optGenericTitle = document.getElementById("optGenericTitle");
+        el.spellbookDialog = document.getElementById("spellbookDialog");
+        el.spellbookTitle = document.getElementById("spellbookTitle");
+        el.spellbookX = document.getElementById("spellbookX");
+        el.spellbookClose = document.getElementById("spellbookClose");
+        el.spellSearch = document.getElementById("spellSearch");
+        el.spellLevelFilter = document.getElementById("spellLevelFilter");
+        el.spellbookMainTitle = document.getElementById("spellbookMainTitle");
+        el.spellbookRightTitle = document.getElementById("spellbookRightTitle");
+        el.spellbookList = document.getElementById("spellbookList");
+        el.spellbookRightList = document.getElementById("spellbookRightList");
+        el.spellbookStatus = document.getElementById("spellbookStatus");
+
+        el.castDialog = document.getElementById("castDialog");
+        el.castTitle = document.getElementById("castTitle");
+        el.castX = document.getElementById("castX");
+        el.castClose = document.getElementById("castClose");
+        el.castConfirm = document.getElementById("castConfirm");
+        el.castSlotLevel = document.getElementById("castSlotLevel");
+        el.castEconomy = document.getElementById("castEconomy");
+        el.castDetailsText = document.getElementById("castDetailsText");
+        el.castRulesText = document.getElementById("castRulesText");
+        el.castHigherText = document.getElementById("castHigherText");
+        el.castStatus = document.getElementById("castStatus");
 
         el.calcDialog = document.getElementById("calcDialog");
         el.calcExpr = document.getElementById("calcExpr");
@@ -2445,72 +2865,79 @@
         el.calcCopy = document.getElementById("calcCopy");
         el.calcClose = document.getElementById("calcClose");
         el.calcX = document.getElementById("calcX");
+      }
 
-        el.spellbookDialog = document.getElementById("spellbookDialog");
-        el.spellbookTitle = document.getElementById("spellbookTitle");
-        el.spellbookX = document.getElementById("spellbookX");
-        el.spellbookClose = document.getElementById("spellbookClose");
-        el.spellbookList = document.getElementById("spellbookList");
-        el.spellbookAlwaysList = document.getElementById("spellbookAlwaysList");
-        el.spellbookStatus = document.getElementById("spellbookStatus");
-        el.spellSearch = document.getElementById("spellSearch");
-        el.spellLevelFilter = document.getElementById("spellLevelFilter");
-        el.spellbookMainTitle = document.getElementById("spellbookMainTitle");
-
-        el.castDialog = document.getElementById("castDialog");
-        el.castTitle = document.getElementById("castTitle");
-        el.castSlotLevel = document.getElementById("castSlotLevel");
-        el.castEconomy = document.getElementById("castEconomy");
-        el.castBaseText = document.getElementById("castBaseText");
-        el.castHigherText = document.getElementById("castHigherText");
-        el.castStatus = document.getElementById("castStatus");
-        el.castConfirm = document.getElementById("castConfirm");
-        el.castClose = document.getElementById("castClose");
-        el.castX = document.getElementById("castX");
+      async function init() {
+        initDom();
 
         el.levelInput.value = String(state.level);
+        el.multiclassToggle.checked = !!state.multiclass;
+        el.buildManifestUrl.value = String(state.buildManifestUrl || "");
 
         el.levelInput.addEventListener("input", async () => {
           state.level = clamp(nint(el.levelInput.value, 1), 1, 20);
-          saveState(state);
+          saveState();
           setStatus("");
           await render();
         });
 
-        el.classSelect.addEventListener("input", async () => {
-          state.classKey = String(el.classSelect.value || "");
-          saveState(state);
-          setSpellStatus("");
+        el.multiclassToggle.addEventListener("change", async () => {
+          state.multiclass = !!el.multiclassToggle.checked;
+          if (!state.multiclass) {
+            // keep primary level aligned with character level by default
+            state.classBlocks[0].classLevel = state.level;
+            state.classBlocks[1].classLevel = 0;
+            state.classBlocks[1].key = "";
+            state.classBlocks[1].packages = [];
+            delete state.preparedSpellsByBlock["mc1"];
+            delete state.knownSpellsByBlock["mc1"];
+          }
+          saveState();
+          await loadPackages();
           await render();
         });
 
-        el.spellModInput.addEventListener("input", async () => {
-          state.spellMod = nint(el.spellModInput.value, 0);
-          saveState(state);
-          await render();
+        el.loadManifest.addEventListener("click", async () => {
+          state.buildManifestUrl = String(el.buildManifestUrl.value || "");
+          saveState();
+          await loadManifest();
         });
+
+        el.addPackage.addEventListener("click", addGlobalPackage);
+        el.clearPackages.addEventListener("click", clearGlobalPackages);
 
         el.shortRest.addEventListener("click", doShortRest);
         el.longRest.addEventListener("click", doLongRest);
         el.nextTurn.addEventListener("click", nextTurn);
 
+        el.spellsResetSlots.addEventListener("click", async () => {
+          resetAllSlots();
+          await render();
+          setSpellStatus("Spell slots reset.", "ok");
+        });
+
+        el.openSpellbookTop.addEventListener("click", openSpellbook);
+        el.openSpellbookSlots.addEventListener("click", openSpellbook);
+        el.spellsManageBtn.addEventListener("click", openSpellbook);
+
         el.basicAttack.addEventListener("click", async () => {
           normalize();
           const ok = useActionAttack();
           if (!ok) {
-            setStatus("No attacks remaining this turn.", "error");
+            setStatus("Action already used, or no attacks remaining this turn.", "error");
             await render();
             return;
           }
-          saveState(state);
+          saveState();
           await render();
           const maxAttacks = getMaxAttacksPerTurn();
           setStatus(`Basic Attack used (${state.attacksUsed}/${maxAttacks}).`, "ok");
         });
 
-        el.actionOptions.addEventListener("click", () => openOptions("action"));
-        el.bonusOptions.addEventListener("click", () => openOptions("bonus"));
-        el.reactionOptions.addEventListener("click", () => openOptions("reaction"));
+        // Options buttons are placeholders (kept from earlier UX)
+        el.actionOptions.addEventListener("click", () => openDialog("Additional Options (Action)", GENERIC_ACTION_BUTTONS.map(x => `- ${x.label}: ${x.text}`).join("\n"), ""));
+        el.bonusOptions.addEventListener("click", () => openDialog("Additional Options (Bonus Action)", "Use Offhand Attack or class features.", ""));
+        el.reactionOptions.addEventListener("click", () => openDialog("Additional Options (Reaction)", "Use Attack of Opportunity, Readied Attack, or class features.", ""));
 
         el.offhandAttack.addEventListener("click", async () => {
           normalize();
@@ -2519,7 +2946,7 @@
             await render();
             return;
           }
-          saveState(state);
+          saveState();
           await render();
           setStatus("Offhand Attack used (bonus action).", "ok");
         });
@@ -2531,7 +2958,7 @@
             await render();
             return;
           }
-          saveState(state);
+          saveState();
           await render();
           setStatus("Attack of Opportunity used (reaction).", "ok");
         });
@@ -2543,7 +2970,7 @@
             await render();
             return;
           }
-          saveState(state);
+          saveState();
           await render();
           setStatus("Readied Attack used (reaction).", "ok");
         });
@@ -2557,26 +2984,26 @@
         el.hpMaxInput.addEventListener("input", async () => {
           state.hpMax = Math.max(0, nint(el.hpMaxInput.value, 0));
           state.hpNow = clamp(state.hpNow, 0, state.hpMax);
-          saveState(state);
+          saveState();
           await render();
         });
 
         el.hpTempInput.addEventListener("input", async () => {
           state.hpTemp = Math.max(0, nint(el.hpTempInput.value, 0));
-          saveState(state);
+          saveState();
           await render();
         });
 
         el.acInput.addEventListener("input", async () => {
           state.acBase = Math.max(0, nint(el.acInput.value, 10));
-          saveState(state);
+          saveState();
           await render();
         });
 
         el.hpFull.addEventListener("click", async () => {
           normalize();
           state.hpNow = state.hpMax;
-          saveState(state);
+          saveState();
           await render();
           setStatus("Healed to full.", "ok");
         });
@@ -2584,11 +3011,12 @@
         el.hpZeroTemp.addEventListener("click", async () => {
           normalize();
           state.hpTemp = 0;
-          saveState(state);
+          saveState();
           await render();
           setStatus("Temp HP cleared.", "ok");
         });
 
+        // Info dialog close
         el.dlgClose.addEventListener("click", () => el.infoDialog.close());
         el.dlgX.addEventListener("click", () => el.infoDialog.close());
         el.infoDialog.addEventListener("click", (e) => {
@@ -2599,16 +3027,33 @@
           if (!inside) el.infoDialog.close();
         });
 
-        el.optClose.addEventListener("click", () => el.optionsDialog.close());
-        el.optX.addEventListener("click", () => el.optionsDialog.close());
-        el.optionsDialog.addEventListener("click", (e) => {
-          const rect = el.optionsDialog.getBoundingClientRect();
+        // Spellbook dialog close
+        el.spellbookClose.addEventListener("click", () => el.spellbookDialog.close());
+        el.spellbookX.addEventListener("click", () => el.spellbookDialog.close());
+        el.spellbookDialog.addEventListener("click", (e) => {
+          const rect = el.spellbookDialog.getBoundingClientRect();
           const inside =
             e.clientX >= rect.left && e.clientX <= rect.right &&
             e.clientY >= rect.top && e.clientY <= rect.bottom;
-          if (!inside) el.optionsDialog.close();
+          if (!inside) el.spellbookDialog.close();
         });
 
+        el.spellSearch.addEventListener("input", () => { if (el.spellbookDialog.open) renderSpellbook(); });
+        el.spellLevelFilter.addEventListener("change", () => { if (el.spellbookDialog.open) renderSpellbook(); });
+
+        // Cast dialog close
+        el.castClose.addEventListener("click", () => el.castDialog.close());
+        el.castX.addEventListener("click", () => el.castDialog.close());
+        el.castDialog.addEventListener("click", (e) => {
+          const rect = el.castDialog.getBoundingClientRect();
+          const inside =
+            e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom;
+          if (!inside) el.castDialog.close();
+        });
+        el.castConfirm.addEventListener("click", castConfirm);
+
+        // Calculator
         function openCalc() {
           if (typeof el.calcDialog.showModal === "function") el.calcDialog.showModal();
           else alert("Calculator dialog not supported in this browser.");
@@ -2654,7 +3099,7 @@
           if (!r.ok) { setCalcStatus(r.error, "error"); return; }
           const amt = Math.max(0, Number(r.value));
           const used = applyDamage(amt);
-          saveState(state);
+          saveState();
           await render();
           setCalcStatus(`Applied ${amt} damage (Temp used: ${used.usedTemp}, HP used: ${used.usedHp}).`, "ok");
         });
@@ -2665,7 +3110,7 @@
           if (!r.ok) { setCalcStatus(r.error, "error"); return; }
           const amt = Math.max(0, Number(r.value));
           const healed = applyHeal(amt);
-          saveState(state);
+          saveState();
           await render();
           setCalcStatus(`Applied ${healed} healing (capped at Max HP).`, "ok");
         });
@@ -2679,54 +3124,15 @@
           }
         });
 
-        el.spellsResetSlots.addEventListener("click", async () => {
-          resetAllSlots();
-          await render();
-          setSpellStatus("Spell slots reset.", "ok");
-        });
+        // Initial load
+        await loadSpellcasting();
+        await loadPackages();
+        updatePackageSummary();
 
-        el.spellsPrepareBtn.addEventListener("click", () => openSpellbook("prepare"));
-        el.openSpellbookTop.addEventListener("click", () => openSpellbook("view"));
+        // Default: if not multiclass, keep primary class level equal to character level if it is 0
+        if (!state.multiclass && nint(state.classBlocks[0].classLevel, 0) <= 0) state.classBlocks[0].classLevel = state.level;
 
-        el.spellbookClose.addEventListener("click", () => el.spellbookDialog.close());
-        el.spellbookX.addEventListener("click", () => el.spellbookDialog.close());
-        el.spellbookDialog.addEventListener("click", (e) => {
-          const rect = el.spellbookDialog.getBoundingClientRect();
-          const inside =
-            e.clientX >= rect.left && e.clientX <= rect.right &&
-            e.clientY >= rect.top && e.clientY <= rect.bottom;
-          if (!inside) el.spellbookDialog.close();
-        });
-
-        el.spellSearch.addEventListener("input", () => {
-          const classDef = getSelectedClassDef();
-          const mode = classDef && isPreparedCaster(classDef) ? "prepare" : "view";
-          renderSpellbookList(mode);
-        });
-        el.spellLevelFilter.addEventListener("input", () => {
-          const classDef = getSelectedClassDef();
-          const mode = classDef && isPreparedCaster(classDef) ? "prepare" : "view";
-          renderSpellbookList(mode);
-        });
-
-        el.castClose.addEventListener("click", () => el.castDialog.close());
-        el.castX.addEventListener("click", () => el.castDialog.close());
-        el.castDialog.addEventListener("click", (e) => {
-          const rect = el.castDialog.getBoundingClientRect();
-          const inside =
-            e.clientX >= rect.left && e.clientX <= rect.right &&
-            e.clientY >= rect.top && e.clientY <= rect.bottom;
-          if (!inside) el.castDialog.close();
-        });
-        el.castConfirm.addEventListener("click", confirmCast);
-
-        (async () => {
-          await loadSupportDoc();
-          await loadSpellcasting();
-          rebuildClassSelect();
-          updateEconomyIcons();
-          await render();
-        })();
+        await render();
       }
 
       document.addEventListener("DOMContentLoaded", init);
