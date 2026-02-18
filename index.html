@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Generic RPG Tracker</title>
+
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --text: #e9eef5;
+        --muted: #97a6b8;
+        --border: #223041;
+        --btn: rgba(26, 39, 53, 0.9);
+        --btnHover: rgba(34, 52, 71, 0.95);
+        --danger: #ff6b6b;
+        --ok: #7ce6a5;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 22px 16px 56px;
+      }
+
+      .header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: 0.2px;
+      }
+
+      .sub { margin: 0; color: var(--muted); }
+
+      .card {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(18, 26, 35, 0.88);
+        backdrop-filter: blur(2px);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 150px;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .label { color: var(--muted); font-size: 14px; }
+
+      input[type="number"], input[type="text"], input[type="url"] {
+        width: 100%;
+        padding: 10px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(15, 22, 32, 0.95);
+        color: var(--text);
+        outline: none;
+      }
+
+      .topStats {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 860px) {
+        .topStats { grid-template-columns: 1fr 1fr 1fr; }
+      }
+
+      .statBox {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(0,0,0,0.18);
+      }
+      .statLabel { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+      .statValue { margin-top: 4px; font-size: 18px; font-weight: 650; }
+
+      .controls {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--btn);
+        color: var(--text);
+        cursor: pointer;
+        user-select: none;
+      }
+      .btn:hover { background: var(--btnHover); }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .qBtn {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(0,0,0,0.12);
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 800;
+      }
+      .qBtn:hover { background: rgba(255,255,255,0.06); }
+
+      .statusBar {
+        margin-top: 10px;
+        min-height: 18px;
+        font-size: 13px;
+        color: var(--muted);
+        white-space: pre-wrap;
+      }
+      .statusBar.ok { color: var(--ok); }
+      .statusBar.error { color: var(--danger); }
+
+      .sectionTitle {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .sectionTitle h2 { margin: 0; font-size: 18px; }
+
+      /* Action Economy */
+      .economyWrap {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(0,0,0,0.18);
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .econRow {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .econRow { grid-template-columns: 210px 1fr; align-items: center; }
+      }
+
+      .econLeft {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .econIcon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(0,0,0,0.25);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .econIcon img {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .econBtns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      /* Health + AC */
+      .hpGrid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 860px) {
+        .hpGrid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+      }
+
+      .hpControls {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 860px) {
+        .hpControls { grid-template-columns: 1fr 1fr 1fr auto; align-items: end; }
+      }
+
+      /* Abilities */
+      .abilityGrid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .abilityGrid { grid-template-columns: 1fr 1fr; }
+      }
+
+      .abilityCard {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(0,0,0,0.18);
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .abilityActIcon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(0,0,0,0.25);
+      }
+      .abilityActIcon img {
+        width: 26px;
+        height: 26px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .abilityIcon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.06);
+        display: grid;
+        place-items: center;
+      }
+      .abilityIcon img {
+        width: 56px;
+        height: 56px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .missingIcon {
+        font-size: 11px;
+        color: var(--muted);
+        padding: 6px;
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      .abilityName { font-weight: 700; letter-spacing: 0.2px; }
+      .abilityMeta { margin-top: 4px; font-size: 13px; color: var(--muted); }
+      .abilityBtns { display: flex; gap: 8px; align-items: center; }
+
+      select {
+        padding: 10px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(15, 22, 32, 0.95);
+        color: var(--text);
+        outline: none;
+      }
+
+      dialog {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 0;
+        background: rgba(15, 22, 32, 0.98);
+        color: var(--text);
+        max-width: 900px;
+        width: calc(100% - 24px);
+      }
+      dialog::backdrop { background: rgba(0,0,0,0.65); }
+
+      .dlgHead {
+        padding: 14px 14px 10px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .dlgTitle { margin: 0; font-size: 18px; }
+
+      .dlgBody { padding: 14px; }
+      .dlgBody p { margin: 0 0 10px; line-height: 1.5; white-space: pre-wrap; }
+      .dlgMeta { margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+      .dlgActions {
+        padding: 12px 14px 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .popupGrid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .popupGrid { grid-template-columns: 1fr 1fr; }
+      }
+
+      .popupSection {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(0,0,0,0.18);
+      }
+      .popupSectionTitle {
+        margin: 0 0 10px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .popupBtns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      /* Calculator popup */
+      .calcDisplayBox {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(15, 22, 32, 0.95);
+      }
+      .calcExpr {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 14px;
+        color: var(--muted);
+        min-height: 18px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .calcResult {
+        margin-top: 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .calcGrid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(56px, 1fr));
+        gap: 10px;
+      }
+      .calcKey {
+        padding: 14px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(26, 39, 53, 0.85);
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 750;
+        text-align: center;
+        user-select: none;
+      }
+      .calcKey:hover { background: var(--btnHover); }
+      .calcKey.wide { grid-column: span 2; }
+      .calcKey.danger { color: #fff; background: rgba(255, 107, 107, 0.25); }
+      .calcKey.ok { color: #06120b; background: rgba(124, 230, 165, 0.95); border-color: rgba(124, 230, 165, 0.35); }
+      .calcKey.ok:hover { filter: brightness(0.95); }
+
+      .footer {
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="wrap">
+      <header class="header">
+        <h1>Generic RPG Tracker</h1>
+        <p class="sub">Loads abilities from ./data/abilities.json</p>
+      </header>
+
+      <!-- Core -->
+      <section class="card" id="coreCard" aria-label="Core">
+        <div class="row">
+          <label for="levelInput" class="label">Character Level (1 to 20)</label>
+          <input id="levelInput" type="number" min="1" max="20" step="1" />
+        </div>
+
+        <div class="topStats">
+          <div class="statBox">
+            <div class="statLabel">Resource A</div>
+            <div class="statValue" id="statAText">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statLabel">Resource B</div>
+            <div class="statValue" id="statBText">-</div>
+          </div>
+          <div class="statBox">
+            <div class="statLabel">Resource C</div>
+            <div class="statValue" id="statCText">-</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="shortRest" class="btn" type="button">Short Rest</button>
+          <button id="longRest" class="btn" type="button">Long Rest</button>
+          <button id="nextTurn" class="btn" type="button">Next Turn</button>
+          <button id="openCalcTop" class="btn" type="button">Open Calculator</button>
+        </div>
+
+        <!-- Action Economy -->
+        <div class="economyWrap" aria-label="Action economy">
+          <div class="econRow">
+            <div class="econLeft">
+              <div class="econIcon"><img id="iconAction" alt="Action" /></div>
+              <div>Action</div>
+            </div>
+            <div class="econBtns">
+              <button id="basicAttack" class="btn" type="button">Basic Attack</button>
+              <button id="actionOptions" class="btn" type="button">Additional Options</button>
+            </div>
+          </div>
+
+          <div class="econRow">
+            <div class="econLeft">
+              <div class="econIcon"><img id="iconBonus" alt="Bonus action" /></div>
+              <div>Bonus Action</div>
+            </div>
+            <div class="econBtns">
+              <button id="offhandAttack" class="btn" type="button">Offhand Attack</button>
+              <button id="bonusOptions" class="btn" type="button">Additional Options</button>
+            </div>
+          </div>
+
+          <div class="econRow">
+            <div class="econLeft">
+              <div class="econIcon"><img id="iconReaction" alt="Reaction" /></div>
+              <div>Reaction</div>
+            </div>
+            <div class="econBtns">
+              <button id="oppAttack" class="btn" type="button">Attack of Opportunity</button>
+              <button id="readiedAttack" class="btn" type="button">Readied Attack</button>
+              <button id="readiedInfo" class="qBtn" type="button" aria-label="Readied action details">?</button>
+              <button id="reactionOptions" class="btn" type="button">Additional Options</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="statusBar" class="statusBar" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- Health + AC -->
+      <section class="card" id="combatCard" aria-label="Health and AC">
+        <div class="sectionTitle">
+          <h2>Health and AC</h2>
+          <div class="sub"></div>
+        </div>
+
+        <div class="hpGrid">
+          <div class="statBox">
+            <div class="statLabel">Current HP</div>
+            <div class="statValue" id="hpNowText">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statLabel">Max HP</div>
+            <div class="statValue" id="hpMaxText">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statLabel">Temp HP</div>
+            <div class="statValue" id="hpTempText">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statLabel">AC</div>
+            <div class="statValue" id="acText">10</div>
+          </div>
+        </div>
+
+        <div class="hpControls">
+          <div>
+            <label class="label" for="hpMaxInput">Set Max HP</label>
+            <input id="hpMaxInput" type="number" min="0" step="1" />
+          </div>
+          <div>
+            <label class="label" for="hpTempInput">Set Temp HP</label>
+            <input id="hpTempInput" type="number" min="0" step="1" />
+          </div>
+          <div>
+            <label class="label" for="acInput">Set AC</label>
+            <input id="acInput" type="number" min="0" step="1" />
+          </div>
+          <div class="controls" style="margin-top:0">
+            <button id="hpFull" class="btn" type="button">Full Heal</button>
+            <button id="hpZeroTemp" class="btn" type="button">Clear Temp</button>
+            <button id="openCalc" class="btn" type="button">Open Calculator</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Abilities -->
+      <section class="card" id="abilitiesCard" aria-label="Abilities">
+        <div class="sectionTitle">
+          <h2>Abilities</h2>
+          <div class="sub">Loaded from support document, spend action economy when used.</div>
+        </div>
+        <div id="abilitiesGrid" class="abilityGrid"></div>
+      </section>
+
+      <!-- Passive Abilities -->
+      <section class="card" id="passivesCard" aria-label="Passive Abilities">
+        <div class="sectionTitle">
+          <h2>Passive Abilities</h2>
+          <div class="sub">Loaded from support document, reference only.</div>
+        </div>
+        <div id="passivesGrid" class="abilityGrid"></div>
+      </section>
+
+      <footer class="footer">Saved in your browser (localStorage).</footer>
+
+      <!-- Generic info dialog -->
+      <dialog id="infoDialog" aria-label="Info dialog">
+        <div class="dlgHead">
+          <h3 class="dlgTitle" id="dlgTitle">Info</h3>
+          <button class="qBtn" id="dlgX" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <div class="dlgBody">
+          <p id="dlgDesc"></p>
+          <div class="dlgMeta" id="dlgMeta"></div>
+        </div>
+        <div class="dlgActions">
+          <button class="btn" id="dlgClose" type="button">Close</button>
+        </div>
+      </dialog>
+
+      <!-- Options popup -->
+      <dialog id="optionsDialog" aria-label="Additional options dialog">
+        <div class="dlgHead">
+          <h3 class="dlgTitle" id="optTitle">Additional Options</h3>
+          <button class="qBtn" id="optX" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <div class="dlgBody">
+          <div class="popupGrid">
+            <div class="popupSection" id="optSectionGeneric">
+              <div class="popupSectionTitle" id="optGenericTitle">Generic</div>
+              <div class="popupBtns" id="optGenericBtns"></div>
+            </div>
+
+            <div class="popupSection">
+              <div class="popupSectionTitle">Abilities</div>
+              <div class="popupBtns" id="optAbilityBtns"></div>
+            </div>
+
+            <div class="popupSection">
+              <div class="popupSectionTitle">Passive Abilities</div>
+              <div class="popupBtns" id="optPassiveBtns"></div>
+            </div>
+          </div>
+          <div class="statusBar" id="optStatus" role="status" aria-live="polite"></div>
+        </div>
+        <div class="dlgActions">
+          <button class="btn" id="optClose" type="button">Close</button>
+        </div>
+      </dialog>
+
+      <!-- Calculator popup -->
+      <dialog id="calcDialog" aria-label="Calculator dialog">
+        <div class="dlgHead">
+          <h3 class="dlgTitle">Calculator</h3>
+          <button class="qBtn" id="calcX" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <div class="dlgBody">
+          <div class="calcDisplayBox">
+            <div class="calcExpr" id="calcExpr"></div>
+            <div class="calcResult" id="calcResult">0</div>
+          </div>
+
+          <div class="controls" style="margin-top: 12px">
+            <button id="applyAsDamage" class="btn" type="button">Apply Result as Damage</button>
+            <button id="applyAsHeal" class="btn" type="button">Apply Result as Healing</button>
+            <button id="calcCopy" class="btn" type="button">Copy Result</button>
+          </div>
+
+          <div class="calcGrid" id="calcGrid">
+            <button class="calcKey danger" data-k="C" type="button">C</button>
+            <button class="calcKey" data-k="(" type="button">(</button>
+            <button class="calcKey" data-k=")" type="button">)</button>
+            <button class="calcKey" data-k="⌫" type="button">⌫</button>
+
+            <button class="calcKey" data-k="7" type="button">7</button>
+            <button class="calcKey" data-k="8" type="button">8</button>
+            <button class="calcKey" data-k="9" type="button">9</button>
+            <button class="calcKey" data-k="/" type="button">÷</button>
+
+            <button class="calcKey" data-k="4" type="button">4</button>
+            <button class="calcKey" data-k="5" type="button">5</button>
+            <button class="calcKey" data-k="6" type="button">6</button>
+            <button class="calcKey" data-k="*" type="button">×</button>
+
+            <button class="calcKey" data-k="1" type="button">1</button>
+            <button class="calcKey" data-k="2" type="button">2</button>
+            <button class="calcKey" data-k="3" type="button">3</button>
+            <button class="calcKey" data-k="-" type="button">−</button>
+
+            <button class="calcKey wide" data-k="0" type="button">0</button>
+            <button class="calcKey" data-k="." type="button">.</button>
+            <button class="calcKey" data-k="+" type="button">+</button>
+
+            <button class="calcKey ok wide" data-k="=" type="button">=</button>
+          </div>
+
+          <div class="statusBar" id="calcStatus" role="status" aria-live="polite"></div>
+        </div>
+        <div class="dlgActions">
+          <button class="btn" id="calcClose" type="button">Close</button>
+        </div>
+      </dialog>
+    </main>
+
+    <script>
+      "use strict";
+
+      /*
+        Support document location:
+        - Create: ./data/abilities.json (relative to index.html)
+        - This app fetches it at runtime.
+
+        IMPORTANT for GitHub Pages:
+        - You must serve from http(s) (GitHub Pages or a local server),
+          not by double-clicking index.html, because fetch() is blocked for file://
+      */
+
+      const SUPPORT_DOC_URL = "./data/abilities.json";
+
+      // Icon paths are defined in the support doc, but these defaults are used if missing.
+      const DEFAULT_ICONS_BASE = "./Icons/";
+      const DEFAULT_ACTION_ICONS = {
+        action: "Action.webp",
+        bonus: "Bonus_action.webp",
+        reaction: "Reaction.webp",
+        actionUsed: "Action_used.webp",
+        bonusUsed: "Bonus_action_used.webp",
+        reactionUsed: "Reaction_used.webp",
+      };
+
+      const STORAGE_KEY = "generic_tracker_state_v1";
+
+      function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+      function nint(v, fallback = 0) {
+        const x = Number(v);
+        return Number.isFinite(x) ? Math.trunc(x) : fallback;
+      }
+
+      const READIED_TEXT =
+`Readied action (Ready -> then react later)
+- On your turn, you use your ACTION to Ready something instead of doing it now.
+- You must pick:
+  1) A clear trigger (example: “When the ogre steps through the doorway…”), and
+  2) The exact response (example: “…I shoot it with my bow,” or “…I move behind the pillar.”).
+- Before the start of your next turn, if the trigger happens, you can use your REACTION to perform the readied response.
+- If the trigger never happens (or you choose not to react), the readied action is lost when your next turn starts.
+- If you Ready a SPELL, you cast it on your turn and hold it (concentration required), then release it with your reaction when the trigger happens. If you don’t release it, the spell slot is still spent.`;
+
+      // Generic action list for Action popup
+      const GENERIC_ACTION_BUTTONS = [
+        { id: "dash", label: "Dash", text: "Dash (move extra up to your speed)" },
+        { id: "disengage", label: "Disengage", text: "Disengage (no opportunity attacks from your movement this turn)" },
+        { id: "dodge", label: "Dodge", text: "Dodge (attacks vs you have disadvantage, Dex saves have advantage)" },
+        { id: "help", label: "Help", text: "Help (give an ally advantage or assist a task)" },
+        { id: "hide", label: "Hide", text: "Hide (make a Stealth check to become hidden)" },
+        { id: "ready", label: "Ready", text: "Ready (set a trigger, then use your reaction to act)" },
+        { id: "search", label: "Search", text: "Search (make a check to find something)" },
+        { id: "object", label: "Use an Object / Interact", text: "Use an Object / Interact (open a door, pull a lever, draw or stow an item, etc.)" },
+        { id: "improv", label: "Improvised action", text: "Improvised actions (DM call): lift/push/drag, break/force open, swing on a rope, tip a statue, grab a ledge, etc." },
+        { id: "throw", label: "Throw something", text: "Throw something (usually an improvised weapon or a thrown weapon, resolved as an attack)" },
+      ];
+
+      const el = {};
+      let state = loadState();
+
+      // Loaded from support doc
+      let SUPPORT = null;
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return {
+              level: 1,
+
+              // 3 generic top stats
+              statA: 0,
+              statB: "-",
+              statC: "-",
+
+              // action economy
+              actionUsed: false,
+              bonusUsed: false,
+              reactionUsed: false,
+              attacksUsed: 0, // still tracked, but maxAttacksPerTurn is configurable in support doc
+
+              // health & AC
+              hpNow: 10,
+              hpMax: 10,
+              hpTemp: 0,
+              acBase: 10,
+
+              // per-rest ability locks (by ability id)
+              restLocks: {},
+
+              // calculator
+              calcExpr: "",
+              calcResult: "0",
+            };
+          }
+
+          const p = JSON.parse(raw);
+          return {
+            level: clamp(nint(p.level, 1), 1, 20),
+            statA: Number.isFinite(Number(p.statA)) ? Number(p.statA) : 0,
+            statB: (p.statB ?? "-"),
+            statC: (p.statC ?? "-"),
+
+            actionUsed: !!p.actionUsed,
+            bonusUsed: !!p.bonusUsed,
+            reactionUsed: !!p.reactionUsed,
+            attacksUsed: Math.max(0, nint(p.attacksUsed, 0)),
+
+            hpNow: Math.max(0, nint(p.hpNow, 10)),
+            hpMax: Math.max(0, nint(p.hpMax, 10)),
+            hpTemp: Math.max(0, nint(p.hpTemp, 0)),
+            acBase: Math.max(0, nint(p.acBase, 10)),
+
+            restLocks: (p.restLocks && typeof p.restLocks === "object") ? p.restLocks : {},
+
+            calcExpr: typeof p.calcExpr === "string" ? p.calcExpr : "",
+            calcResult: typeof p.calcResult === "string" ? p.calcResult : "0",
+          };
+        } catch {
+          return {
+            level: 1,
+            statA: 0,
+            statB: "-",
+            statC: "-",
+            actionUsed: false,
+            bonusUsed: false,
+            reactionUsed: false,
+            attacksUsed: 0,
+            hpNow: 10,
+            hpMax: 10,
+            hpTemp: 0,
+            acBase: 10,
+            restLocks: {},
+            calcExpr: "",
+            calcResult: "0",
+          };
+        }
+      }
+
+      function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+      function normalize() {
+        state.level = clamp(nint(state.level, 1), 1, 20);
+        state.hpMax = Math.max(0, nint(state.hpMax, 0));
+        state.hpNow = clamp(nint(state.hpNow, 0), 0, state.hpMax);
+        state.hpTemp = Math.max(0, nint(state.hpTemp, 0));
+        state.acBase = Math.max(0, nint(state.acBase, 10));
+        state.attacksUsed = Math.max(0, nint(state.attacksUsed, 0));
+        if (typeof state.restLocks !== "object" || !state.restLocks) state.restLocks = {};
+        if (typeof state.calcExpr !== "string") state.calcExpr = "";
+        if (typeof state.calcResult !== "string") state.calcResult = "0";
+      }
+
+      function setStatus(msg, kind = "") {
+        el.statusBar.textContent = msg || "";
+        el.statusBar.classList.remove("ok", "error");
+        if (kind) el.statusBar.classList.add(kind);
+      }
+
+      function setOptStatus(msg, kind = "") {
+        el.optStatus.textContent = msg || "";
+        el.optStatus.classList.remove("ok", "error");
+        if (kind) el.optStatus.classList.add(kind);
+      }
+
+      function setCalcStatus(msg, kind = "") {
+        el.calcStatus.textContent = msg || "";
+        el.calcStatus.classList.remove("ok", "error");
+        if (kind) el.calcStatus.classList.add(kind);
+      }
+
+      function openDialog(title, desc, meta) {
+        el.dlgTitle.textContent = title;
+        el.dlgDesc.textContent = desc;
+        el.dlgMeta.textContent = meta || "";
+        if (typeof el.infoDialog.showModal === "function") el.infoDialog.showModal();
+        else alert(`${title}\n\n${desc}\n\n${meta || ""}`);
+      }
+
+      function actionTypeLabel(actionType) {
+        if (actionType === "bonus") return "Bonus Action";
+        if (actionType === "reaction") return "Reaction";
+        if (actionType === "action") return "Action";
+        return "Passive";
+      }
+
+      function getIconsBase() {
+        return (SUPPORT && SUPPORT.meta && SUPPORT.meta.iconsBase) ? SUPPORT.meta.iconsBase : DEFAULT_ICONS_BASE;
+      }
+
+      function getActionIcons() {
+        return (SUPPORT && SUPPORT.meta && SUPPORT.meta.actionIcons) ? SUPPORT.meta.actionIcons : DEFAULT_ACTION_ICONS;
+      }
+
+      function getMaxAttacksPerTurn() {
+        const v = SUPPORT && SUPPORT.meta && Number.isFinite(Number(SUPPORT.meta.maxAttacksPerTurn))
+          ? Number(SUPPORT.meta.maxAttacksPerTurn)
+          : 1;
+        return Math.max(1, Math.trunc(v));
+      }
+
+      function consumeEconomy(kind) {
+        if (kind === "action") {
+          if (state.actionUsed) return false;
+          state.actionUsed = true;
+          return true;
+        }
+        if (kind === "bonus") {
+          if (state.bonusUsed) return false;
+          state.bonusUsed = true;
+          return true;
+        }
+        if (kind === "reaction") {
+          if (state.reactionUsed) return false;
+          state.reactionUsed = true;
+          return true;
+        }
+        return true;
+      }
+
+      function useActionAttack() {
+        const maxAttacks = getMaxAttacksPerTurn();
+        if (state.attacksUsed >= maxAttacks) return false;
+        state.actionUsed = true;
+        state.attacksUsed += 1;
+        return true;
+      }
+
+      function nextTurn() {
+        state.actionUsed = false;
+        state.bonusUsed = false;
+        state.reactionUsed = false;
+        state.attacksUsed = 0;
+        saveState(state);
+        render();
+        setStatus("Next turn: action economy refreshed.", "ok");
+      }
+
+      function doShortRest() {
+        // unlock abilities that are oncePerShortRest (tracked in restLocks)
+        if (!SUPPORT) return;
+        for (const a of SUPPORT.abilities || []) {
+          if (a && a.id && a.usage && a.usage.type === "oncePerShortRest") {
+            delete state.restLocks[a.id];
+          }
+        }
+        saveState(state);
+        render();
+        setStatus("Short rest: short-rest locks cleared.", "ok");
+      }
+
+      function doLongRest() {
+        // unlock oncePerShortRest and oncePerLongRest
+        if (!SUPPORT) return;
+        for (const a of SUPPORT.abilities || []) {
+          if (a && a.id && a.usage && (a.usage.type === "oncePerShortRest" || a.usage.type === "oncePerLongRest")) {
+            delete state.restLocks[a.id];
+          }
+        }
+        saveState(state);
+        render();
+        setStatus("Long rest: long-rest locks cleared.", "ok");
+      }
+
+      function applyDamage(amount) {
+        amount = Math.max(0, Number(amount) || 0);
+        if (amount <= 0) return { usedTemp: 0, usedHp: 0 };
+        const usedTemp = Math.min(state.hpTemp, amount);
+        state.hpTemp -= usedTemp;
+        const remaining = amount - usedTemp;
+        const usedHp = Math.min(state.hpNow, remaining);
+        state.hpNow -= usedHp;
+        return { usedTemp, usedHp };
+      }
+
+      function applyHeal(amount) {
+        amount = Math.max(0, Number(amount) || 0);
+        if (amount <= 0) return 0;
+        const before = state.hpNow;
+        state.hpNow = Math.min(state.hpMax, state.hpNow + amount);
+        return state.hpNow - before;
+      }
+
+      function renderCoreStats() {
+        el.statAText.textContent = String(state.statA);
+        el.statBText.textContent = String(state.statB);
+        el.statCText.textContent = String(state.statC);
+      }
+
+      function renderCombat() {
+        el.hpNowText.textContent = String(state.hpNow);
+        el.hpMaxText.textContent = String(state.hpMax);
+        el.hpTempText.textContent = String(state.hpTemp);
+        el.acText.textContent = String(state.acBase);
+
+        el.hpMaxInput.value = String(state.hpMax);
+        el.hpTempInput.value = String(state.hpTemp);
+        el.acInput.value = String(state.acBase);
+      }
+
+      function updateEconomyIcons() {
+        const base = getIconsBase();
+        const A = getActionIcons();
+        el.iconAction.src = base + (state.actionUsed ? A.actionUsed : A.action);
+        el.iconBonus.src = base + (state.bonusUsed ? A.bonusUsed : A.bonus);
+        el.iconReaction.src = base + (state.reactionUsed ? A.reactionUsed : A.reaction);
+      }
+
+      function renderEconomyButtons() {
+        const maxAttacks = getMaxAttacksPerTurn();
+        el.basicAttack.disabled = state.attacksUsed >= maxAttacks;
+        el.actionOptions.disabled = state.actionUsed;
+        el.offhandAttack.disabled = state.bonusUsed;
+        el.bonusOptions.disabled = state.bonusUsed;
+        el.oppAttack.disabled = state.reactionUsed;
+        el.readiedAttack.disabled = state.reactionUsed;
+        el.reactionOptions.disabled = state.reactionUsed;
+      }
+
+      function isLockedByRest(ability) {
+        if (!ability || !ability.id) return false;
+        if (!ability.usage || !ability.usage.type) return false;
+        return !!state.restLocks[ability.id];
+      }
+
+      function markUsedByRest(ability) {
+        if (!ability || !ability.id) return;
+        if (!ability.usage || !ability.usage.type) return;
+        if (ability.usage.type === "oncePerShortRest" || ability.usage.type === "oncePerLongRest") {
+          state.restLocks[ability.id] = true;
+        }
+      }
+
+      function canUseAbility(ability) {
+        if (!ability) return false;
+        if (state.level < (ability.level || 1)) return false;
+
+        const actionType = ability.actionType || "action";
+        if (actionType === "action" && state.actionUsed) return false;
+        if (actionType === "bonus" && state.bonusUsed) return false;
+        if (actionType === "reaction" && state.reactionUsed) return false;
+
+        if (isLockedByRest(ability)) return false;
+
+        // If it has a cost list (not tracked by this generic app), it still belongs in Abilities,
+        // but the app will not enforce the resource, only action economy and rest locks.
+        return true;
+      }
+
+      async function handleAbilityUse(ability, sink = "main") {
+        const setSinkStatus = (msg, kind) => {
+          if (sink === "options") setOptStatus(msg, kind);
+          else setStatus(msg, kind);
+        };
+
+        const actionType = ability.actionType || "action";
+        if (actionType !== "passive") {
+          if (!consumeEconomy(actionType)) {
+            setSinkStatus(`${actionTypeLabel(actionType)} already used this turn.`, "error");
+            saveState(state);
+            await render();
+            return;
+          }
+        }
+
+        markUsedByRest(ability);
+        saveState(state);
+        await render();
+        setSinkStatus(`${ability.name} used.`, "ok");
+      }
+
+      function abilityMetaLine(ability) {
+        const parts = [];
+        parts.push(actionTypeLabel(ability.actionType || "action"));
+
+        if (ability.cost && ability.cost.length) {
+          const costParts = ability.cost.map(c => `${c.amount} ${c.resource}`).join(", ");
+          parts.push(`Cost: ${costParts}`);
+        } else {
+          parts.push("Cost: none");
+        }
+
+        if (ability.usage && ability.usage.type) {
+          if (ability.usage.type === "oncePerShortRest") parts.push("Once per short rest");
+          if (ability.usage.type === "oncePerLongRest") parts.push("Once per long rest");
+          if (ability.usage.type === "charges") parts.push(`Charges: ${ability.usage.max}`);
+        }
+
+        return parts.join(" | ");
+      }
+
+      function renderAbilityCard(container, ability, { showUseButton }) {
+        const base = getIconsBase();
+
+        const card = document.createElement("div");
+        card.className = "abilityCard";
+
+        const actWrap = document.createElement("div");
+        actWrap.className = "abilityActIcon";
+        const actImg = document.createElement("img");
+        actImg.alt = `${ability.actionType || "action"} icon`;
+        const A = getActionIcons();
+        const at = (ability.actionType || "action");
+        const iconFile = at === "bonus" ? A.bonus : (at === "reaction" ? A.reaction : A.action);
+        actImg.src = base + iconFile;
+        actWrap.appendChild(actImg);
+
+        const iconWrap = document.createElement("div");
+        iconWrap.className = "abilityIcon";
+
+        if (ability.icon && typeof ability.icon === "string") {
+          const img = document.createElement("img");
+          img.alt = `${ability.name} icon`;
+          img.onerror = () => { iconWrap.innerHTML = `<div class="missingIcon">Missing icon<br>${ability.icon}</div>`; };
+          img.src = ability.icon.startsWith("./") || ability.icon.startsWith("http")
+            ? ability.icon
+            : (base + ability.icon);
+          iconWrap.appendChild(img);
+        } else {
+          iconWrap.innerHTML = `<div class="missingIcon">No icon</div>`;
+        }
+
+        const mid = document.createElement("div");
+        const name = document.createElement("div");
+        name.className = "abilityName";
+        name.textContent = ability.name;
+
+        const meta = document.createElement("div");
+        meta.className = "abilityMeta";
+        meta.textContent = abilityMetaLine(ability);
+
+        mid.appendChild(name);
+        mid.appendChild(meta);
+
+        const btns = document.createElement("div");
+        btns.className = "abilityBtns";
+
+        if (showUseButton) {
+          const useBtn = document.createElement("button");
+          useBtn.className = "btn";
+          useBtn.type = "button";
+          useBtn.textContent = isLockedByRest(ability) ? "Locked" : "Use";
+          useBtn.disabled = !canUseAbility(ability);
+          useBtn.addEventListener("click", () => handleAbilityUse(ability, "main"));
+          btns.appendChild(useBtn);
+        }
+
+        const q = document.createElement("button");
+        q.className = "qBtn";
+        q.type = "button";
+        q.textContent = "?";
+        q.addEventListener("click", () => {
+          openDialog(ability.name, ability.desc || "", abilityMetaLine(ability));
+        });
+        btns.appendChild(q);
+
+        card.appendChild(actWrap);
+        card.appendChild(iconWrap);
+        card.appendChild(mid);
+        card.appendChild(btns);
+
+        container.appendChild(card);
+      }
+
+      function renderAbilities() {
+        el.abilitiesGrid.innerHTML = "";
+        el.passivesGrid.innerHTML = "";
+
+        if (!SUPPORT || !Array.isArray(SUPPORT.abilities)) {
+          const e1 = document.createElement("div");
+          e1.className = "sub";
+          e1.textContent = "No abilities loaded.";
+          el.abilitiesGrid.appendChild(e1);
+
+          const e2 = document.createElement("div");
+          e2.className = "sub";
+          e2.textContent = "No passive abilities loaded.";
+          el.passivesGrid.appendChild(e2);
+          return;
+        }
+
+        const unlocked = SUPPORT.abilities.filter(a => state.level >= (a.level || 1));
+
+        // Per your rule:
+        // - Abilities that have ANY cost go into Abilities
+        // - Abilities with no cost go into Passive Abilities
+        const active = unlocked.filter(a => Array.isArray(a.cost) && a.cost.length > 0);
+        const passive = unlocked.filter(a => !Array.isArray(a.cost) || a.cost.length === 0);
+
+        if (active.length === 0) {
+          const e = document.createElement("div");
+          e.className = "sub";
+          e.textContent = "No abilities available yet.";
+          el.abilitiesGrid.appendChild(e);
+        } else {
+          for (const a of active) renderAbilityCard(el.abilitiesGrid, a, { showUseButton: true });
+        }
+
+        if (passive.length === 0) {
+          const e = document.createElement("div");
+          e.className = "sub";
+          e.textContent = "No passive abilities available yet.";
+          el.passivesGrid.appendChild(e);
+        } else {
+          for (const a of passive) renderAbilityCard(el.passivesGrid, a, { showUseButton: false });
+        }
+      }
+
+      function openOptions(kind) {
+        el.optTitle.textContent = `Additional Options (${actionTypeLabel(kind)})`;
+        setOptStatus("");
+
+        el.optGenericBtns.innerHTML = "";
+        el.optAbilityBtns.innerHTML = "";
+        el.optPassiveBtns.innerHTML = "";
+
+        // Generic buttons per row
+        if (kind === "action") {
+          el.optSectionGeneric.style.display = "";
+          el.optGenericTitle.textContent = "Generic actions";
+          for (const g of GENERIC_ACTION_BUTTONS) {
+            const b = document.createElement("button");
+            b.className = "btn";
+            b.type = "button";
+            b.textContent = g.label;
+            b.disabled = state.actionUsed;
+            b.addEventListener("click", async () => {
+              if (!consumeEconomy("action")) { setOptStatus("Action already used this turn.", "error"); return; }
+              saveState(state);
+              await render();
+              setOptStatus(`Used action: ${g.text}`, "ok");
+            });
+            el.optGenericBtns.appendChild(b);
+          }
+        } else if (kind === "bonus") {
+          el.optSectionGeneric.style.display = "";
+          el.optGenericTitle.textContent = "Bonus actions";
+          const b = document.createElement("button");
+          b.className = "btn";
+          b.type = "button";
+          b.textContent = "Offhand Attack";
+          b.disabled = state.bonusUsed;
+          b.addEventListener("click", async () => {
+            if (!consumeEconomy("bonus")) { setOptStatus("Bonus action already used this turn.", "error"); return; }
+            saveState(state);
+            await render();
+            setOptStatus("Offhand Attack used (bonus action).", "ok");
+          });
+          el.optGenericBtns.appendChild(b);
+        } else {
+          el.optSectionGeneric.style.display = "";
+          el.optGenericTitle.textContent = "Reactions";
+
+          const b1 = document.createElement("button");
+          b1.className = "btn";
+          b1.type = "button";
+          b1.textContent = "Attack of Opportunity";
+          b1.disabled = state.reactionUsed;
+          b1.addEventListener("click", async () => {
+            if (!consumeEconomy("reaction")) { setOptStatus("Reaction already used this turn.", "error"); return; }
+            saveState(state);
+            await render();
+            setOptStatus("Attack of Opportunity used (reaction).", "ok");
+          });
+
+          const b2 = document.createElement("button");
+          b2.className = "btn";
+          b2.type = "button";
+          b2.textContent = "Readied Attack";
+          b2.disabled = state.reactionUsed;
+          b2.addEventListener("click", async () => {
+            if (!consumeEconomy("reaction")) { setOptStatus("Reaction already used this turn.", "error"); return; }
+            saveState(state);
+            await render();
+            setOptStatus("Readied Attack used (reaction).", "ok");
+          });
+
+          const q = document.createElement("button");
+          q.className = "qBtn";
+          q.type = "button";
+          q.textContent = "?";
+          q.addEventListener("click", () => openDialog("Readied Attack", READIED_TEXT, ""));
+
+          el.optGenericBtns.appendChild(b1);
+          el.optGenericBtns.appendChild(b2);
+          el.optGenericBtns.appendChild(q);
+        }
+
+        // Abilities and passives listed here too, filtered by actionType
+        const unlocked = (SUPPORT && Array.isArray(SUPPORT.abilities))
+          ? SUPPORT.abilities.filter(a => state.level >= (a.level || 1))
+          : [];
+
+        const active = unlocked.filter(a => Array.isArray(a.cost) && a.cost.length > 0);
+        const passive = unlocked.filter(a => !Array.isArray(a.cost) || a.cost.length === 0);
+
+        const forKindActive = active.filter(a => (a.actionType || "action") === kind);
+        const forKindPassive = passive.filter(a => (a.actionType || "passive") === kind);
+
+        if (forKindActive.length === 0) {
+          const sp = document.createElement("div");
+          sp.className = "sub";
+          sp.textContent = "No abilities for this action type.";
+          el.optAbilityBtns.appendChild(sp);
+        } else {
+          for (const a of forKindActive) {
+            const b = document.createElement("button");
+            b.className = "btn";
+            b.type = "button";
+            b.textContent = a.name + (isLockedByRest(a) ? " (Locked)" : "");
+            b.disabled = !canUseAbility(a);
+            b.addEventListener("click", async () => {
+              if (!canUseAbility(a)) { setOptStatus(`${a.name}: not available right now.`, "error"); await render(); return; }
+              await handleAbilityUse(a, "options");
+            });
+
+            const q = document.createElement("button");
+            q.className = "qBtn";
+            q.type = "button";
+            q.textContent = "?";
+            q.addEventListener("click", () => openDialog(a.name, a.desc || "", abilityMetaLine(a)));
+
+            el.optAbilityBtns.appendChild(b);
+            el.optAbilityBtns.appendChild(q);
+          }
+        }
+
+        // Passive abilities: only show "Use" if they actually consume the row's economy
+        // Otherwise these remain reference-only.
+        if (forKindPassive.length === 0) {
+          const sp = document.createElement("div");
+          sp.className = "sub";
+          sp.textContent = "No passive abilities for this action type.";
+          el.optPassiveBtns.appendChild(sp);
+        } else {
+          for (const p of forKindPassive) {
+            const canSpend =
+              (p.actionType === "action" && !state.actionUsed) ||
+              (p.actionType === "bonus" && !state.bonusUsed) ||
+              (p.actionType === "reaction" && !state.reactionUsed);
+
+            const b = document.createElement("button");
+            b.className = "btn";
+            b.type = "button";
+            b.textContent = p.name;
+            b.disabled = !canSpend;
+            b.addEventListener("click", async () => {
+              if (!consumeEconomy(p.actionType || "action")) { setOptStatus(`${actionTypeLabel(p.actionType)} already used this turn.`, "error"); return; }
+              saveState(state);
+              await render();
+              setOptStatus(`Used ${actionTypeLabel(p.actionType)} for: ${p.name}`, "ok");
+            });
+
+            const q = document.createElement("button");
+            q.className = "qBtn";
+            q.type = "button";
+            q.textContent = "?";
+            q.addEventListener("click", () => openDialog(p.name, p.desc || "", abilityMetaLine(p)));
+
+            el.optPassiveBtns.appendChild(b);
+            el.optPassiveBtns.appendChild(q);
+          }
+        }
+
+        if (typeof el.optionsDialog.showModal === "function") el.optionsDialog.showModal();
+        else alert("Options dialog not supported in this browser.");
+      }
+
+      /* ---------- Calculator ---------- */
+      function renderCalculator() {
+        el.calcExpr.textContent = state.calcExpr || "";
+        el.calcResult.textContent = state.calcResult || "0";
+      }
+
+      function sanitizeExpr(expr) {
+        if (typeof expr !== "string") return "";
+        return expr.replace(/[^0-9+\-*/().\s]/g, "");
+      }
+
+      function safeEval(expr) {
+        const s = sanitizeExpr(expr).trim();
+        if (!s) return { ok: true, value: 0, expr: "" };
+
+        let bal = 0;
+        for (const ch of s) {
+          if (ch === "(") bal++;
+          if (ch === ")") bal--;
+          if (bal < 0) return { ok: false, error: "Mismatched parentheses." };
+        }
+        if (bal !== 0) return { ok: false, error: "Mismatched parentheses." };
+
+        if (/[*\/+\-]{3,}/.test(s)) return { ok: false, error: "Invalid operator sequence." };
+
+        try {
+          const fn = new Function(`"use strict"; return (${s});`);
+          const v = fn();
+          if (!Number.isFinite(v)) return { ok: false, error: "Result is not a finite number." };
+          return { ok: true, value: v, expr: s };
+        } catch {
+          return { ok: false, error: "Invalid expression." };
+        }
+      }
+
+      function setCalcResultFromExpr() {
+        const r = safeEval(state.calcExpr);
+        if (!r.ok) {
+          state.calcResult = "ERR";
+          setCalcStatus(r.error, "error");
+          renderCalculator();
+          return;
+        }
+        state.calcResult = String(r.value);
+        setCalcStatus("");
+        renderCalculator();
+      }
+
+      function calcPress(key) {
+        if (key === "C") {
+          state.calcExpr = "";
+          state.calcResult = "0";
+          setCalcStatus("");
+          saveState(state);
+          renderCalculator();
+          return;
+        }
+        if (key === "⌫") {
+          state.calcExpr = (state.calcExpr || "").slice(0, -1);
+          saveState(state);
+          setCalcResultFromExpr();
+          saveState(state);
+          return;
+        }
+        if (key === "=") {
+          const r = safeEval(state.calcExpr);
+          if (!r.ok) {
+            state.calcResult = "ERR";
+            setCalcStatus(r.error, "error");
+            saveState(state);
+            renderCalculator();
+            return;
+          }
+          state.calcExpr = String(r.value);
+          state.calcResult = String(r.value);
+          setCalcStatus("");
+          saveState(state);
+          renderCalculator();
+          return;
+        }
+
+        state.calcExpr = sanitizeExpr((state.calcExpr || "") + key);
+        saveState(state);
+        setCalcResultFromExpr();
+        saveState(state);
+      }
+
+      function getCalcNumericResult() {
+        const r = safeEval(state.calcExpr);
+        if (!r.ok) return { ok: false, error: r.error };
+        return { ok: true, value: r.value };
+      }
+
+      /* ---------- Support document loading ---------- */
+      async function loadSupportDoc() {
+        try {
+          const res = await fetch(SUPPORT_DOC_URL, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const json = await res.json();
+          SUPPORT = json;
+          return true;
+        } catch (e) {
+          SUPPORT = null;
+          setStatus(`Failed to load support doc: ${SUPPORT_DOC_URL}\nTip: must be served over http(s).`, "error");
+          return false;
+        }
+      }
+
+      /* ---------- Main render ---------- */
+      async function render() {
+        normalize();
+        renderCoreStats();
+        renderCombat();
+        updateEconomyIcons();
+        renderEconomyButtons();
+        renderAbilities();
+        renderCalculator();
+        setCalcResultFromExpr();
+      }
+
+      function init() {
+        el.levelInput = document.getElementById("levelInput");
+
+        el.statAText = document.getElementById("statAText");
+        el.statBText = document.getElementById("statBText");
+        el.statCText = document.getElementById("statCText");
+
+        el.shortRest = document.getElementById("shortRest");
+        el.longRest = document.getElementById("longRest");
+        el.nextTurn = document.getElementById("nextTurn");
+        el.openCalcTop = document.getElementById("openCalcTop");
+
+        el.iconAction = document.getElementById("iconAction");
+        el.iconBonus = document.getElementById("iconBonus");
+        el.iconReaction = document.getElementById("iconReaction");
+
+        el.basicAttack = document.getElementById("basicAttack");
+        el.actionOptions = document.getElementById("actionOptions");
+        el.offhandAttack = document.getElementById("offhandAttack");
+        el.bonusOptions = document.getElementById("bonusOptions");
+        el.oppAttack = document.getElementById("oppAttack");
+        el.readiedAttack = document.getElementById("readiedAttack");
+        el.readiedInfo = document.getElementById("readiedInfo");
+        el.reactionOptions = document.getElementById("reactionOptions");
+
+        el.statusBar = document.getElementById("statusBar");
+
+        el.hpNowText = document.getElementById("hpNowText");
+        el.hpMaxText = document.getElementById("hpMaxText");
+        el.hpTempText = document.getElementById("hpTempText");
+        el.acText = document.getElementById("acText");
+        el.hpMaxInput = document.getElementById("hpMaxInput");
+        el.hpTempInput = document.getElementById("hpTempInput");
+        el.acInput = document.getElementById("acInput");
+        el.hpFull = document.getElementById("hpFull");
+        el.hpZeroTemp = document.getElementById("hpZeroTemp");
+        el.openCalc = document.getElementById("openCalc");
+
+        el.abilitiesGrid = document.getElementById("abilitiesGrid");
+        el.passivesGrid = document.getElementById("passivesGrid");
+
+        el.infoDialog = document.getElementById("infoDialog");
+        el.dlgTitle = document.getElementById("dlgTitle");
+        el.dlgDesc = document.getElementById("dlgDesc");
+        el.dlgMeta = document.getElementById("dlgMeta");
+        el.dlgClose = document.getElementById("dlgClose");
+        el.dlgX = document.getElementById("dlgX");
+
+        el.optionsDialog = document.getElementById("optionsDialog");
+        el.optTitle = document.getElementById("optTitle");
+        el.optGenericBtns = document.getElementById("optGenericBtns");
+        el.optAbilityBtns = document.getElementById("optAbilityBtns");
+        el.optPassiveBtns = document.getElementById("optPassiveBtns");
+        el.optStatus = document.getElementById("optStatus");
+        el.optClose = document.getElementById("optClose");
+        el.optX = document.getElementById("optX");
+        el.optSectionGeneric = document.getElementById("optSectionGeneric");
+        el.optGenericTitle = document.getElementById("optGenericTitle");
+
+        el.calcDialog = document.getElementById("calcDialog");
+        el.calcExpr = document.getElementById("calcExpr");
+        el.calcResult = document.getElementById("calcResult");
+        el.calcStatus = document.getElementById("calcStatus");
+        el.calcGrid = document.getElementById("calcGrid");
+        el.applyAsDamage = document.getElementById("applyAsDamage");
+        el.applyAsHeal = document.getElementById("applyAsHeal");
+        el.calcCopy = document.getElementById("calcCopy");
+        el.calcClose = document.getElementById("calcClose");
+        el.calcX = document.getElementById("calcX");
+
+        el.levelInput.value = String(state.level);
+
+        el.levelInput.addEventListener("input", async () => {
+          state.level = clamp(nint(el.levelInput.value, 1), 1, 20);
+          saveState(state);
+          setStatus("");
+          await render();
+        });
+
+        el.shortRest.addEventListener("click", doShortRest);
+        el.longRest.addEventListener("click", doLongRest);
+        el.nextTurn.addEventListener("click", nextTurn);
+
+        el.basicAttack.addEventListener("click", async () => {
+          normalize();
+          const ok = useActionAttack();
+          if (!ok) {
+            setStatus("No attacks remaining this turn.", "error");
+            await render();
+            return;
+          }
+          saveState(state);
+          await render();
+          const maxAttacks = getMaxAttacksPerTurn();
+          setStatus(`Basic Attack used (${state.attacksUsed}/${maxAttacks}).`, "ok");
+        });
+
+        el.actionOptions.addEventListener("click", () => openOptions("action"));
+        el.bonusOptions.addEventListener("click", () => openOptions("bonus"));
+        el.reactionOptions.addEventListener("click", () => openOptions("reaction"));
+
+        el.offhandAttack.addEventListener("click", async () => {
+          normalize();
+          if (!consumeEconomy("bonus")) {
+            setStatus("Bonus action already used this turn.", "error");
+            await render();
+            return;
+          }
+          saveState(state);
+          await render();
+          setStatus("Offhand Attack used (bonus action).", "ok");
+        });
+
+        el.oppAttack.addEventListener("click", async () => {
+          normalize();
+          if (!consumeEconomy("reaction")) {
+            setStatus("Reaction already used this turn.", "error");
+            await render();
+            return;
+          }
+          saveState(state);
+          await render();
+          setStatus("Attack of Opportunity used (reaction).", "ok");
+        });
+
+        el.readiedAttack.addEventListener("click", async () => {
+          normalize();
+          if (!consumeEconomy("reaction")) {
+            setStatus("Reaction already used this turn.", "error");
+            await render();
+            return;
+          }
+          saveState(state);
+          await render();
+          setStatus("Readied Attack used (reaction).", "ok");
+        });
+
+        el.readiedInfo.addEventListener("click", () => openDialog("Readied Attack", READIED_TEXT, ""));
+
+        el.hpMaxInput.value = String(state.hpMax);
+        el.hpTempInput.value = String(state.hpTemp);
+        el.acInput.value = String(state.acBase);
+
+        el.hpMaxInput.addEventListener("input", async () => {
+          state.hpMax = Math.max(0, nint(el.hpMaxInput.value, 0));
+          state.hpNow = clamp(state.hpNow, 0, state.hpMax);
+          saveState(state);
+          await render();
+        });
+
+        el.hpTempInput.addEventListener("input", async () => {
+          state.hpTemp = Math.max(0, nint(el.hpTempInput.value, 0));
+          saveState(state);
+          await render();
+        });
+
+        el.acInput.addEventListener("input", async () => {
+          state.acBase = Math.max(0, nint(el.acInput.value, 10));
+          saveState(state);
+          await render();
+        });
+
+        el.hpFull.addEventListener("click", async () => {
+          normalize();
+          state.hpNow = state.hpMax;
+          saveState(state);
+          await render();
+          setStatus("Healed to full.", "ok");
+        });
+
+        el.hpZeroTemp.addEventListener("click", async () => {
+          normalize();
+          state.hpTemp = 0;
+          saveState(state);
+          await render();
+          setStatus("Temp HP cleared.", "ok");
+        });
+
+        el.dlgClose.addEventListener("click", () => el.infoDialog.close());
+        el.dlgX.addEventListener("click", () => el.infoDialog.close());
+        el.infoDialog.addEventListener("click", (e) => {
+          const rect = el.infoDialog.getBoundingClientRect();
+          const inside =
+            e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom;
+          if (!inside) el.infoDialog.close();
+        });
+
+        el.optClose.addEventListener("click", () => el.optionsDialog.close());
+        el.optX.addEventListener("click", () => el.optionsDialog.close());
+        el.optionsDialog.addEventListener("click", (e) => {
+          const rect = el.optionsDialog.getBoundingClientRect();
+          const inside =
+            e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom;
+          if (!inside) el.optionsDialog.close();
+        });
+
+        function openCalc() {
+          if (typeof el.calcDialog.showModal === "function") el.calcDialog.showModal();
+          else alert("Calculator dialog not supported in this browser.");
+        }
+        el.openCalc.addEventListener("click", openCalc);
+        el.openCalcTop.addEventListener("click", openCalc);
+
+        el.calcClose.addEventListener("click", () => el.calcDialog.close());
+        el.calcX.addEventListener("click", () => el.calcDialog.close());
+        el.calcDialog.addEventListener("click", (e) => {
+          const rect = el.calcDialog.getBoundingClientRect();
+          const inside =
+            e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom;
+          if (!inside) el.calcDialog.close();
+        });
+
+        el.calcGrid.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-k]");
+          if (!btn) return;
+          const k = String(btn.getAttribute("data-k") || "");
+          if (!k) return;
+          calcPress(k);
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (!el.calcDialog.open) return;
+
+          const k = e.key;
+          const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
+          if (tag === "input" || tag === "select" || tag === "textarea") return;
+
+          if (k >= "0" && k <= "9") return calcPress(k);
+          if (k === "+" || k === "-" || k === "*" || k === "/" || k === "." || k === "(" || k === ")") return calcPress(k);
+          if (k === "Enter" || k === "=") { e.preventDefault(); return calcPress("="); }
+          if (k === "Backspace") { e.preventDefault(); return calcPress("⌫"); }
+          if (k === "Escape") { e.preventDefault(); return calcPress("C"); }
+        });
+
+        el.applyAsDamage.addEventListener("click", async () => {
+          normalize();
+          const r = getCalcNumericResult();
+          if (!r.ok) { setCalcStatus(r.error, "error"); return; }
+          const amt = Math.max(0, Number(r.value));
+          const used = applyDamage(amt);
+          saveState(state);
+          await render();
+          setCalcStatus(`Applied ${amt} damage (Temp used: ${used.usedTemp}, HP used: ${used.usedHp}).`, "ok");
+        });
+
+        el.applyAsHeal.addEventListener("click", async () => {
+          normalize();
+          const r = getCalcNumericResult();
+          if (!r.ok) { setCalcStatus(r.error, "error"); return; }
+          const amt = Math.max(0, Number(r.value));
+          const healed = applyHeal(amt);
+          saveState(state);
+          await render();
+          setCalcStatus(`Applied ${healed} healing (capped at Max HP).`, "ok");
+        });
+
+        el.calcCopy.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(String(el.calcResult.textContent || "0"));
+            setCalcStatus("Result copied to clipboard.", "ok");
+          } catch {
+            setCalcStatus("Could not copy (browser blocked clipboard).", "error");
+          }
+        });
+
+        (async () => {
+          await loadSupportDoc();
+          updateEconomyIcons();
+          await render();
+        })();
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
