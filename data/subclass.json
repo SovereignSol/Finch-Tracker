@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "classes": [
+    {
+      "class": "Warlock",
+      "subclasses": [
+        {
+          "name": "The Archfey",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        },
+        {
+          "name": "The Fiend",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        },
+        {
+          "name": "The Great Old One",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        }
+      ]
+    }
+  ]
+}

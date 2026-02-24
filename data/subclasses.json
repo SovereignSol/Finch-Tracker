@@ -1,0 +1,70 @@
+{
+  "version": 2,
+  "classes": [
+    {
+      "class": "Fighter",
+      "subclasses": [
+        {
+          "name": "Eldritch Knight",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "third",
+            "spellSourceClass": "Wizard",
+            "alwaysPrepared": []
+          }
+        }
+      ]
+    },
+    {
+      "class": "Warlock",
+      "subclasses": [
+        {
+          "name": "The Archfey",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        },
+        {
+          "name": "The Fiend",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        },
+        {
+          "name": "The Great Old One",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "warlock",
+            "spellSourceClass": "Warlock",
+            "alwaysPrepared": []
+          }
+        }
+      ]
+    },
+    {
+      "class": "Rogue",
+      "subclasses": [
+        {
+          "name": "Arcane Trickster",
+          "packageUrl": "",
+          "spellRules": {
+            "type": "known",
+            "progression": "third",
+            "spellSourceClass": "Wizard",
+            "alwaysPrepared": []
+          }
+        }
+      ]
+    }
+  ]
+}

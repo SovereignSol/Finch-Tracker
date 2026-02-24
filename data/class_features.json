@@ -1,0 +1,104 @@
+{
+  "classes": {
+    "Warlock": {
+      "levels": {
+        "1": {
+          "grants": [
+            {
+              "id": "pactMagic",
+              "name": "Pact Magic",
+              "text": "You can cast warlock spells using pact magic. Track pact slots in the Rest/Spells tabs."
+            }
+          ],
+          "choices": [
+            {
+              "id": "skills",
+              "name": "Skill Proficiencies",
+              "prompt": "Choose 2 skills (Warlock).",
+              "choose": 2,
+              "options": [
+                {
+                  "id": "arcana",
+                  "name": "Arcana",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "arcana",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "deception",
+                  "name": "Deception",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "deception",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "history",
+                  "name": "History",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "history",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "intimidation",
+                  "name": "Intimidation",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "intimidation",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "investigation",
+                  "name": "Investigation",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "investigation",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "nature",
+                  "name": "Nature",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "nature",
+                      "level": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "religion",
+                  "name": "Religion",
+                  "effects": [
+                    {
+                      "type": "skillProficiency",
+                      "skillId": "religion",
+                      "level": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
