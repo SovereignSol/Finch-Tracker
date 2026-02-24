@@ -2104,7 +2104,9 @@ function renderLevelUpWizardStep(){
         <div class="mt">
           <div><strong>Choose ${canNeed} cantrip${canNeed===1?"":"s"}</strong></div>
           <label class="field mt"><span>Filter</span><input id="wizCantripFilter" type="text" placeholder="Type to filter cantrips" /></label>
-          <select id="wizCantripSelect" multiple size="10" class="mt">${cantrips.map(s=>`<option value="${escapeAttr(s.id)}">${escapeHtml(s.name)}</option>`).join("")}</select>
+          <div id="wizCantripList" class="mt" style="max-height: 280px; overflow:auto; border:1px solid var(--line); padding:8px; border-radius:10px;">
+            ${cantrips.map(s=>`<label class="pill" style="display:block; margin:6px 0;"><input type="checkbox" class="wizPickCantrip" value="${escapeAttr(s.id)}"> ${escapeHtml(s.name)}</label>`).join("")}
+          </div>
           <div class="small muted mt">Selected: <span id="wizCantripCount">0</span> of ${canNeed}</div>
         </div>
       ` : ""}
@@ -2113,7 +2115,9 @@ function renderLevelUpWizardStep(){
         <div class="mt">
           <div><strong>Choose ${spNeed} spell${spNeed===1?"":"s"} (${escapeHtml(plan?.spellListLabel || "Known")})</strong></div>
           <label class="field mt"><span>Filter</span><input id="wizSpellFilter" type="text" placeholder="Type to filter spells" /></label>
-          <select id="wizSpellSelect" multiple size="12" class="mt">${spells.map(s=>`<option value="${escapeAttr(s.id)}">${escapeHtml(s.name)} (L${Number(s.level||0)}${s.school ? ", " + escapeHtml(s.school) : ""})</option>`).join("")}</select>
+          <div id="wizSpellList" class="mt" style="max-height: 360px; overflow:auto; border:1px solid var(--line); padding:8px; border-radius:10px;">
+            ${spells.map(s=>`<label class="pill" style="display:block; margin:6px 0;"><input type="checkbox" class="wizPickSpell" value="${escapeAttr(s.id)}"> ${escapeHtml(s.name)} <span class="small muted">(L${Number(s.level||0)}${s.school ? ", " + escapeHtml(s.school) : ""})</span></label>`).join("")}
+          </div>
           <div class="small muted mt">Selected: <span id="wizSpellCount">0</span> of ${spNeed}</div>
         </div>
       ` : ""}
@@ -2133,36 +2137,45 @@ function renderLevelUpWizardStep(){
     // Keep plan reference for validation
     LEVELUP_WIZ.spells.autoCantripIds = autoCantrips.slice();
 
-    function bindFilter(inputId, selectId){
-      const inp = body.querySelector(inputId);
-      const sel = body.querySelector(selectId);
-      if (!inp || !sel) return;
+    function bindFilterToCheckboxList(inputSel, listSel){
+      const inp = body.querySelector(inputSel);
+      const list = body.querySelector(listSel);
+      if (!inp || !list) return;
       inp.addEventListener("input", () => {
         const q = inp.value.toLowerCase().trim();
-        for (const opt of sel.options){
-          const txt = String(opt.textContent||"").toLowerCase();
-          opt.hidden = q ? !txt.includes(q) : false;
-        }
+        qa("label", list).forEach(lab => {
+          const txt = String(lab.textContent||"").toLowerCase();
+          lab.hidden = q ? !txt.includes(q) : false;
+        });
       });
     }
 
-    function bindMultiCount(selectId, outId, storeKey){
-      const sel = body.querySelector(selectId);
-      const out = body.querySelector(outId);
-      if (!sel || !out) return;
+    function bindCheckboxPicks({ pickClass, outSel, storeKey, need }){
+      const out = body.querySelector(outSel);
+      const boxes = qa(`input.${pickClass}`, body);
+      if (!out || !boxes.length) return;
+
+      const prev = new Set(Array.isArray(LEVELUP_WIZ.spells?.[storeKey]) ? LEVELUP_WIZ.spells[storeKey] : []);
+      boxes.forEach(b => { b.checked = prev.has(b.value); });
+
       const update = () => {
-        const ids = Array.from(sel.selectedOptions).map(o=>o.value);
-        LEVELUP_WIZ.spells[storeKey] = ids;
-        out.textContent = String(ids.length);
+        const picked = boxes.filter(b => b.checked).map(b => b.value);
+        while (picked.length > need){
+          const last = picked.pop();
+          const bx = boxes.find(b => b.value === last);
+          if (bx) bx.checked = false;
+        }
+        LEVELUP_WIZ.spells[storeKey] = picked;
+        out.textContent = String(picked.length);
       };
-      sel.addEventListener("change", update);
+      boxes.forEach(b => b.addEventListener("change", update));
       update();
     }
 
-    bindFilter("#wizCantripFilter", "#wizCantripSelect");
-    bindFilter("#wizSpellFilter", "#wizSpellSelect");
-    bindMultiCount("#wizCantripSelect", "#wizCantripCount", "learnCantripIds");
-    bindMultiCount("#wizSpellSelect", "#wizSpellCount", "learnSpellIds");
+    bindFilterToCheckboxList("#wizCantripFilter", "#wizCantripList");
+    bindFilterToCheckboxList("#wizSpellFilter", "#wizSpellList");
+    if (canNeed) bindCheckboxPicks({ pickClass:"wizPickCantrip", outSel:"#wizCantripCount", storeKey:"learnCantripIds", need: canNeed });
+    if (spNeed) bindCheckboxPicks({ pickClass:"wizPickSpell", outSel:"#wizSpellCount", storeKey:"learnSpellIds", need: spNeed });
 
     // Replacement
     const doRep = body.querySelector("#wizDoReplace");
@@ -2472,12 +2485,16 @@ function commitLevelUpWizard(){
   }
 
   // HP
+  const prevHpMax = clampInt(Number(state.combat.hpMax||0), 0, 9999);
+  const prevHpNow = clampInt(Number(state.combat.hpNow||0), 0, 9999);
+
   const baseHpGain = clampInt(LEVELUP_WIZ.baseHpGain ?? LEVELUP_WIZ.hpGain, 1, 99);
   const gainingToughNow = (LEVELUP_WIZ.asiFeat?.type === "feat") && (String(LEVELUP_WIZ.asiFeat?.featId||"") === "feat_tough");
   const toughBonus = toughBonusOnLevelUp({ stateBefore, gainingToughNow, newTotalLevel: state.level });
   const hpGain = clampInt(baseHpGain + toughBonus, 1, 999);
-  state.combat.hpMax = clampInt(Number(state.combat.hpMax||0) + hpGain, 1, 9999);
-  state.combat.hpNow = clampInt(Number(state.combat.hpNow||0), 0, state.combat.hpMax);
+  state.combat.hpMax = clampInt(prevHpMax + hpGain, 1, 9999);
+  const bumpNow = (prevHpNow >= prevHpMax) ? hpGain : 0;
+  state.combat.hpNow = clampInt(prevHpNow + bumpNow, 0, state.combat.hpMax);
 
   // Hit dice
   addHitDieForClassLevelChange(state, block.className, +1);
